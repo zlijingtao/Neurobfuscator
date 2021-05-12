@@ -1,0 +1,21 @@
+FUSE: iteration 0/1
+FUSE: iteration 0/1
+
+WARNING: The TensorFlow contrib module will not be included in TensorFlow 2.0.
+For more information, please see:
+  * https://github.com/tensorflow/community/blob/master/rfcs/20180907-contrib-sunset.md
+  * https://github.com/tensorflow/addons
+If you depend on functionality not listed there, please file an issue.
+
+Apply High-level Graph Obfuscation:
+Extract tasks...
+Prune old tasks...
+Tuning...
+No tuning Task Found!
+Apply Backend Obfuscator...
+Nothing to Apply!
+Apply Defusion:
+torch time cycle = 128009267.0
+tvm time cycle = 113517037.0
+Time cost is 113517037.0
+Prediction after obfuscation is conv conv pooling conv conv conv conv conv conv conv fc fc fc fc unknown 
