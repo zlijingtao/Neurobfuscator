@@ -8,7 +8,7 @@ def ga_file_searcher(dir_path, datatime):
     reward_list = []
     cycle_list = []
     for filename in os.listdir(dir_path):
-        if "hyperparam_model" in filename and datatime in filename:
+        if "dim_model" in filename and datatime in filename:
             with open(dir_path + filename) as f:
                 lines = f.readlines()
                 clean_cycle = 0
@@ -45,8 +45,8 @@ def ga_file_searcher(dir_path, datatime):
 
 #%%
 if __name__ == '__main__':
-    reward_list, cycle_list = ga_file_searcher("../hyparam_obfuscator/", "05032030")
-    with open('../hyparam_obfuscator/log_scrapper.csv', 'w') as f:
+    reward_list, cycle_list = ga_file_searcher("../dim_obfuscator/", "05032030")
+    with open('../dim_obfuscator/log_scrapper.csv', 'w') as f:
         write = csv.writer(f)
         write.writerow(cycle_list)
         write.writerow(reward_list)

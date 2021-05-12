@@ -401,17 +401,17 @@ def collect_feature_target(dir, reduced = True, time_only = False, include_name 
     df = pd.DataFrame(panda_dict)
     if reduced:
         if time_only:
-            df.to_csv('../train_predictor/obfuscator/dataset/timeonly_conv_classification.csv', index=False) 
+            df.to_csv('../seq_predictor/obfuscator/dataset/timeonly_conv_classification.csv', index=False) 
         else:
-            df.to_csv('../train_predictor/obfuscator/dataset/reduced_conv_classification.csv', index=False) 
+            df.to_csv('../seq_predictor/obfuscator/dataset/reduced_conv_classification.csv', index=False) 
     else:
-        df.to_csv('../train_predictor/obfuscator/dataset/full_conv_classification.csv', index=False) 
+        df.to_csv('../seq_predictor/obfuscator/dataset/full_conv_classification.csv', index=False) 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_type", type=str, default="full", help='Pick dataset you want to generate', choices=("reduced", "full", "time_only"))
     parser.add_argument("--selection", type=str, default="complex_batch_1_nclass_1000_infeat_150528", help='Type a string, only contains which will be generated')
-    parser.add_argument("--prefix_output", type=str, default="PL_train_data", help='prefix for the dataset output')
+    parser.add_argument("--prefix_output", type=str, default="cifar10_train_data", help='prefix for the dataset output')
     parser.add_argument("--orig_img_dim", type=int, default=224, help='original image dimension')
     args = parser.parse_args()
     if args.dataset_type == "reduced":

@@ -334,13 +334,13 @@ def dump_to_pickel(dir, reduced = True, time_only = False, include_name = "batch
     # print(original_list)
     if reduced:
         if time_only:
-            with open('../train_predictor/obfuscator/dataset/{}_dict_time_only.pickle'.format(prefix_output), 'wb') as handle:
+            with open('../seq_predictor/obfuscator/dataset/{}_dict_time_only.pickle'.format(prefix_output), 'wb') as handle:
                 pickle.dump(train_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         else:
-            with open('../train_predictor/obfuscator/dataset/{}_dict.pickle'.format(prefix_output), 'wb') as handle:
+            with open('../seq_predictor/obfuscator/dataset/{}_dict.pickle'.format(prefix_output), 'wb') as handle:
                 pickle.dump(train_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     else:
-        with open('../train_predictor/obfuscator/dataset/{}_dict_full.pickle'.format(prefix_output), 'wb') as handle:
+        with open('../seq_predictor/obfuscator/dataset/{}_dict_full.pickle'.format(prefix_output), 'wb') as handle:
             pickle.dump(train_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':

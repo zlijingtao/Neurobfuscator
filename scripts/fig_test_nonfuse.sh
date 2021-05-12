@@ -1,6 +1,6 @@
 #!/bin/bash
 #Use to generate fuse/non-fuse timeline figure.
-cd ../trace_obfuscate
+cd ../seq_obfuscator
 
 python torch_relay_obfuscate_nvprof.py
 

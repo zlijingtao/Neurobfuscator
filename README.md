@@ -11,7 +11,7 @@ We will provide an open-source docker image (NVIDIA-docker) to run the tool (upo
 
 #### **(can skip)** Set input/output of the model, batch_size and number of random seeds.
 
-Change settings in provided scripts: `./scripts/trace_gen_advance_xx.sh` and `./tracegen_3090_depth.sh`
+Change settings in provided scripts: ``./scripts/trace_gen_xx.sh``
 
 #### **(can skip)** Set range of parameters which you want to profile.
 
@@ -33,7 +33,7 @@ python trace_gen/trace_dataset_gen.py
 
 #### Train using the generated trace file
 
-assume you follow the steps above, a pickle file should appear in train_predictor/obfuscator/dataset/. If you skip the [*] step, you can download the pickle file from here: https://drive.google.com/drive/folders/1EZh8EYEthSSEdlocFV01Lyi-k5VL3XIj?usp=sharing
+assume you follow the steps above, a pickle file should appear in seq_predictor/obfuscator/dataset/. If you skip the [*] step, you can download the pickle file from here: https://drive.google.com/drive/folders/1EZh8EYEthSSEdlocFV01Lyi-k5VL3XIj?usp=sharing
 
 set "choice=deepsniffer" in train.sh
 
@@ -42,7 +42,7 @@ bash ./scripts/train.sh
 ```
 ## ++Run the Obfuscation++
 
-### Use the obfuscator (set a pair of model file `.py` and model label `.npy` file in `./trace_obfuscate/` as input, adjust the settings in  `./trace_obfuscate/obf_env.py` )
+### Use the obfuscator (set a pair of model file `.py` and model label `.npy` file in `./seq_obfuscator/` as input, adjust the settings in  `./seq_obfuscator/seq_obfuscate.py` )
 ```
 bash ./scripts/obfuscate.sh
 ```

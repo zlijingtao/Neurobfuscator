@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ../trace_obfuscate
+cd ../seq_obfuscator
 #Use to generate tuner test figure showing xgb characteristics do not change much.
 
 nn_id=3
