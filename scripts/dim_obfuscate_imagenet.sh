@@ -6,11 +6,17 @@ input_features=150528
 
 run_option=genetic_algorithm
 
+# your_model_id=
+# your_budget=
+# model_id=${your_model_id}
+# budget_list=(${your_budget})
+# n_pop=16
+# n_generation=20
+#Run below for testing, run above for sweeping experiments
+budget_list=(0.20)
+n_pop=4
+n_generation=2
 model_id=1
-
-budget_list=(0.01 0.02 0.05 0.10 0.20)
-n_pop=16
-n_generation=20
 
 
 for budget in ${budget_list[*]}; do

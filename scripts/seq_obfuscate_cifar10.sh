@@ -12,8 +12,10 @@ model_name_base=deepsniffer_LSTM_both_autotvm_smart
 model_name_afterfix=cifar10
 reward_type=divide_square_residue_offseted
 
-# budget_list=(0.01 0.02 0.05 0.10 0.20)
-# nn_id_list=(4 5 6 7)
+# your_model_id=
+# your_budget=
+# budget_list=(${your_budget})
+# nn_id_list=(${your_model_id})
 # restore_step=149
 # num_predictor_model=5
 # predict_type=all

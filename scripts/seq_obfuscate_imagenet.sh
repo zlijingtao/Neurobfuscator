@@ -16,9 +16,21 @@ num_predictor_model=3
 restore_step=49
 reward_type=divide_square_residue_offseted
 
-for budget in 0.01 0.02 0.05 0.10 0.20
+# your_model_id=
+# your_budget=
+# budget_list=(${your_budget})
+# nn_id_list=(${your_model_id})
+# n_pop=16
+# n_generation=20
+#Run below for testing, run above for bagging of 3 LSTM predictors
+budget_list=(0.20)
+nn_id_list=(10)
+n_pop=4
+n_generation=2
+
+for budget in ${budget_list[*]}
 do
-    for nn_id in 8 9 10 #Run VGG-11, resnet-20, VGG-13, resnet-32
+    for nn_id in ${nn_id_list[*]}
     do
     python seq_obfuscate.py --batch_size ${batch_size} --input_features ${input_features} --nn_id ${nn_id} \
     --predict_type ${predict_type} --normalize ${normalize} --model_name_base ${model_name_base} \

@@ -9,11 +9,9 @@ bash seq_validate_cifar10.sh
 bash seq_obfuscate_cifar10.sh
 
 #Go through the dimension obfuscation
-#Step 1. Gather Traces of Random Convolution2D operation
-bash dim_datagen_cifar10.sh
-#Step 2. Train Random Forest Regressors based on Random Convolution2D Parameter-Trace Dataset
+#Step 5. Train Random Forest Regressors based on Random Convolution2D Parameter-Trace Dataset
 bash dim_train.sh
-#Step 3. Validate Random Forest Regressors based on Random Convolution2D Parameter-Trace Dataset
+#Step 6. Validate Random Forest Regressors based on Random Convolution2D Parameter-Trace Dataset
 bash dim_validate.sh
-#Step 4. Do Dimension Obfuscation on a 64-128 (Input/Output Channel) Conv2D
+#Step 7. Do Dimension Obfuscation on a 64-128 (Input/Output Channel) Conv2D
 bash dim_obfuscate_cifar10.sh

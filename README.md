@@ -1,53 +1,120 @@
-# DNN Model Trace Obfuscator (Neurobfuscator)
+# NeurObfuscator (DNN Architecture Obfuscator)
 
-## **Running in Docker** (Recommended, see bottom for mannual setup)
+![Framework](misc/figs/framework.svg)
 
-We will provide an open-source docker image (NVIDIA-docker) to run the tool (upon paper being accepted).
+## Description
+
+**NeurObfuscator** is a full-stack obfuscation tool to obfuscate the neural network architecture while preserving its functionality with very limited performance overhead. 
+
+At the heart of this tool is a set of obfuscating knobs, including layer branching, layer widening, selective fusion and schedule pruning, that increase the number of operators, reduce/increase the latency, and number of cache and DRAM accesses.
+
+A genetic algorithm-based approach is adopted to orchestrate the combination of obfuscating knobs to achieve the best obfuscating effect on the layer sequence and dimension parameters that both architecture secrets cannot be extracted successfully. 
+
+Results on sequence obfuscation show that the proposed tool obfuscates a ResNet-18 ImageNet model to a totally different architecture (with 44 layer difference) without affecting its functionality with only 2\% overall latency overhead. 
+
+For dimension obfuscation, we demonstrate that an example convolution layer with 64 input and 128 output channels is extracted to 207 input and 93 output channels with only a 2\% latency overhead.
 
 
+## Documentation
+### <ins>**Build Docker Image**<ins> 
 
+Follow the instruction below to install the NVIDIA docker.
 
-## **Script Usage**
+https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 
-#### **(can skip)** Set input/output of the model, batch_size and number of random seeds.
-
-Change settings in provided scripts: ``./scripts/trace_gen_xx.sh``
-
-#### **(can skip)** Set range of parameters which you want to profile.
-
-modify the function `model_name_from_seed` in `./trace_gen/func_generator.py`
-
-#### Run the scripts
-```
-bash ./scripts/trace_gen.sh
-```
-
-#### [*] You may skip the trace generation and use the provided trace to generate a dataset.
-```
-python trace_gen/trace_dataset_gen.py
-```
-
-## ++Train Model Seqeunce Predictor++
-
-### **Train the model**
-
-#### Train using the generated trace file
-
-assume you follow the steps above, a pickle file should appear in seq_predictor/obfuscator/dataset/. If you skip the [*] step, you can download the pickle file from here: https://drive.google.com/drive/folders/1EZh8EYEthSSEdlocFV01Lyi-k5VL3XIj?usp=sharing
-
-set "choice=deepsniffer" in train.sh
+Then, ``cd`` to this repository, and run the build command below:
 
 ```
-bash ./scripts/train.sh
-```
-## ++Run the Obfuscation++
-
-### Use the obfuscator (set a pair of model file `.py` and model label `.npy` file in `./seq_obfuscator/` as input, adjust the settings in  `./seq_obfuscator/seq_obfuscate.py` )
-```
-bash ./scripts/obfuscate.sh
+docker build -t neurob .
 ```
 
 
+PS: This could be a slow building process. We will provide an open-source docker image (NVIDIA-docker) to run the tool if the paper is accepted.
+
+
+### <ins>**Test the Tool**<ins>
+
+Test the tool using provided ``run.sh`` script to go through all necessary steps of NeurObfuscator. This includes: 
+
+1) Dataset Generation 
+2) Sequence Predictor Training 
+3) Sequence Predictor Validation
+4) Sequence Obfuscation
+5) Dimension Predictor Training 
+6) Dimension Predictor Validation
+7) Dimension Obfuscation
+
+```
+docker run --gpus all -it neurob
+bash run.sh
+```
+
+#### **Expected Results**:
+
+You can find a newly generated log file under ``./seq_obfuscator/``, at the end of the log file, a final compilation on the best obfuscated model is done, and a snapshot of the result is like this:
+
+![SeqLog](misc/figs/seq_log.PNG)
+
+where, we applied several sequence obfuscating knobs and achieves a LER of ``0.294``. (This is just from a toy example.)
+
+The compiled runtime for the obfuscated model sits under ``./seq_obfuscator/deploy_lib/``
+
+![DeployLib](misc/figs/deploy_lib.PNG)
+
+### <ins>**Real Use Case**<ins>
+
+To use the tool in practice, first, you need script/coding your own model under ``./seq_obfuscator/model_file/`` and properly label it. (*We currently only supports a specific format*)
+
+Importantly, a reasonable large parameter need to be set by simply re-commenting and run the ``run above`` setting we provide. (*need to check all scripts*)
+
+```bash
+# your_model_id=
+# your_budget=
+# budget_list=(${your_budget})
+# nn_id_list=(${your_model_id})
+# restore_step=149
+# num_predictor_model=5
+# predict_type=all
+# n_pop=16
+# n_generation=20
+#Run below for testing, run above for bagging of 15 LSTM predictors
+budget_list=(0.20)
+nn_id_list=(4)
+restore_step=49
+num_predictor_model=1
+predict_type=full
+n_pop=4
+n_generation=2
+```
+
+After re-commenting, you need to set a budget in ``./scripts/seq_obfuscate_cifar.sh`` (as an example). Suppose your model_id is ``15`` and budget is ``0.20``.
+
+```bash
+your_model_id=15
+your_budget=0.20
+budget_list=(${your_budget})
+nn_id_list=(${your_model_id})
+restore_step=149
+num_predictor_model=5
+predict_type=all
+n_pop=16
+n_generation=20
+#Run below for testing, run above for bagging of 15 LSTM predictors
+# budget_list=(0.20)
+# nn_id_list=(4)
+# restore_step=49
+# num_predictor_model=1
+# predict_type=full
+# n_pop=4
+# n_generation=2
+```
+
+
+
+
+
+
+<!-- 
 
 ## **Mannual Setup** (Not Recommended, cost hours and could result in failure)
 
@@ -159,7 +226,7 @@ export PATH="/usr/local/NVIDIA-Nsight-Compute:$PATH"
 
 We provide a sepcial Trace Section, please move it into customizable Trace Section folder of 
 
-**(if using ncu 2020.3.0)** cp torch_profiling/ncu_section/ImportantTraceAnalysis.section ~/Documents/NVIDIA Nsight Compute/2020.3.0/Sections/
+**(if using ncu 2020.3.0)** cp torch_profiling/ncu_section/ImportantTraceAnalysis.section ~/Documents/NVIDIA Nsight Compute/2020.3.0/Sections/ -->
 
 
 

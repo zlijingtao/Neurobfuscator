@@ -26,7 +26,7 @@ RUN python -m pip install pylint==1.9.4 six numpy pytest cython decorator scipy 
 
 RUN python -m pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio==0.7.2 -f https://download.pytorch.org/whl/torch_stable.html
 
-RUN python -m pip install tensorflow==1.13.1 xgboost
+RUN python -m pip install tensorflow==1.13.1 xgboost sklearn psutil
 
 # LLVM
 RUN echo deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main \
@@ -41,7 +41,7 @@ RUN cd /usr && \
      mkdir build && \
      cp cmake/config.cmake build
 
-COPY copy2tvm/tvm /usr/tvm
+COPY misc/copy2tvm/tvm /usr/tvm
 RUN  cd /usr/tvm/build && bash -c \
      "echo set\(USE_LLVM llvm-config-10\) >> config.cmake && \
      echo set\(USE_CUDA ON\) >> config.cmake" && \
@@ -81,9 +81,7 @@ COPY . /root/neurob
 
 ARG target="/root/Documents/NVIDIA Nsight Compute/2020.3.0/Sections"
 
-COPY ncu_section ${target}
-
-RUN python -m pip install sklearn psutil
+COPY misc/ncu_section ${target}
 
 WORKDIR /root/neurob/scripts
 CMD ["bash"]
