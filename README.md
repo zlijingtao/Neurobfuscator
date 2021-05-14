@@ -18,11 +18,15 @@ For dimension obfuscation, we demonstrate that an example convolution layer with
 ## Documentation
 ### <ins>**Build Docker Image**<ins> 
 
+Download the zip file of this Repository at MEGA link below (access with key: z3Gu3hgAV_f2r35OpJ8lgVw1L3vpyRjz3aa1nRXgvWw):
+
+https://mega.nz/file/3jgCRJaZ
+
 Follow the instruction below to install the NVIDIA docker.
 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 
-Then, ``cd`` to this repository, and run the build command below:
+Then, ``cd`` to this repository (where the Dockerfile is located), and run the build command below:
 
 ```
 docker build -t neurob .
