@@ -86,6 +86,8 @@ def main(args):
         classifier = pickle.load(open(model_path, "rb"))
         predictions = classifier.predict(X_test)
         mae_score_test = mean_absolute_error(y_test, predictions)
+
+        print("DER for current dimension parameter is: ", np.mean(np.abs(y_test - predictions)/predictions))
         print("Mean Absolute Error on the validation set is: %.4f" %mae_score_test)
 
     print("Saving the classifier")
