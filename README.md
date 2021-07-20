@@ -24,13 +24,14 @@ Follow the instruction below to install the NVIDIA docker.
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 
     
-### <ins>**Download Docker Image**<ins> 
+### <ins>**Pull Pre-build Docker Image**<ins> 
 
-
+```
+docker pull zlijingtao/neurobfuscator
+```
     
 ### <ins>**(Alternative) Build Docker Image**<ins> 
     
-Then, ``cd`` to this repository (where the Dockerfile is located), and run the build command below:
 
 ```
 docker build -t neurob .
