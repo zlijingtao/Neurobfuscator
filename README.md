@@ -16,24 +16,27 @@ For dimension obfuscation, we demonstrate that an example convolution layer with
 
 
 ## Documentation
-### <ins>**Build Docker Image**<ins> 
 
-Download the zip file of this Repository at MEGA link below (access with key: z3Gu3hgAV_f2r35OpJ8lgVw1L3vpyRjz3aa1nRXgvWw):
-
-https://mega.nz/file/3jgCRJaZ
-
+### <ins>**Install NVIDIA docker**<ins> 
+    
 Follow the instruction below to install the NVIDIA docker.
 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 
+    
+### <ins>**Download Docker Image**<ins> 
+
+
+    
+### <ins>**(Alternative) Build Docker Image**<ins> 
+    
 Then, ``cd`` to this repository (where the Dockerfile is located), and run the build command below:
 
 ```
 docker build -t neurob .
 ```
 
-
-PS: This could be a slow building process. We will provide an open-source docker image (NVIDIA-docker) to run the tool if the paper is accepted.
+PS: This could be a slow building process.
 
 
 ### <ins>**Test the Tool**<ins>
@@ -55,19 +58,19 @@ bash run.sh
 
 #### **Expected Results**:
 
-You can find a newly generated log file under ``./seq_obfuscator/``, at the end of the log file, a final compilation on the best obfuscated model is done, and a snapshot of the result is like this:
+The log file is saved under ``./seq_obfuscator/``, a snapshot of the result:
 
 ![SeqLog](misc/figs/seq_log.PNG)
 
-where, we applied several sequence obfuscating knobs and achieves a LER of ``0.294``. (This is just from a toy example.)
+where, we applied several sequence obfuscating knobs and achieves a LER of ``0.294``. (This is a toy example.)
 
-The compiled runtime for the obfuscated model sits under ``./seq_obfuscator/deploy_lib/``
+The compiled runtime for the obfuscated model is saved under ``./seq_obfuscator/deploy_lib/``
 
 ![DeployLib](misc/figs/deploy_lib.PNG)
 
 ### <ins>**Real Use Case**<ins>
 
-To use the tool in practice, first, you need script/coding your own model under ``./seq_obfuscator/model_file/`` and properly label it. (*We currently only supports a specific format*)
+To use the tool in practice, first, you need script/coding the original neural network model ``./seq_obfuscator/model_file/`` and properly label it. (*We currently only supports a specific format, need to match the format as other example networks in this directory*)
 
 Importantly, a reasonable large parameter need to be set by simply re-commenting and run the ``run above`` setting we provide. (*need to check all scripts*)
 
