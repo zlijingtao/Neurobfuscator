@@ -4,6 +4,8 @@
 
 ## Description
 
+(This work is to appear in HOST 2021!)
+
 **NeurObfuscator** is a full-stack obfuscation tool to obfuscate the neural network architecture while preserving its functionality with very limited performance overhead. 
 
 At the heart of this tool is a set of obfuscating knobs, including layer branching, layer widening, selective fusion and schedule pruning, that increase the number of operators, reduce/increase the latency, and number of cache and DRAM accesses.
