@@ -41,6 +41,7 @@ first_ctc/
 *.jar
 *.rar
 *.tar
+!test_attack/data100/*.tar
 *.zip
 
 # Logs and databases #

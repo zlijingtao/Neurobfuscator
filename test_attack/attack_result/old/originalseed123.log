@@ -1,0 +1,10 @@
+src: 0	tar: 5	total: 100	success: 27	avg iter: 39.529998779296875	diff_suc: 70.64088341041848	dif_total: 157.6528741455078
+src: 1	tar: 6	total: 100	success: 37	avg iter: 35.65999984741211	diff_suc: 64.52110702927048	dif_total: 93.10839281082153
+src: 2	tar: 7	total: 100	success: 58	avg iter: 25.68000030517578	diff_suc: 50.9598040169683	dif_total: 70.30203678607941
+src: 3	tar: 8	total: 100	success: 27	avg iter: 39.31999969482422	diff_suc: 60.677434532730665	dif_total: 129.25160899162293
+src: 4	tar: 0	total: 100	success: 50	avg iter: 31.030000686645508	diff_suc: 70.42204323768615	dif_total: 116.63853558063506
+src: 5	tar: 1	total: 100	success: 17	avg iter: 43.810001373291016	diff_suc: 79.9907465542064	dif_total: 123.30870599746704
+src: 6	tar: 2	total: 100	success: 58	avg iter: 23.469999313354492	diff_suc: 29.293520187509472	dif_total: 46.413954401016234
+src: 7	tar: 3	total: 100	success: 48	avg iter: 28.959999084472656	diff_suc: 41.85436969995499	dif_total: 81.47914950370789
+src: 8	tar: 4	total: 100	success: 71	avg iter: 21.739999771118164	diff_suc: 65.23484381823472	dif_total: 88.66964209556579
+src: 9	tar: 5	total: 100	success: 16	avg iter: 43.689998626708984	diff_suc: 67.7126030921936	dif_total: 146.99732028961182

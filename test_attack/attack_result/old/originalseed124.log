@@ -1,0 +1,10 @@
+src: 0	tar: 5	total: 100	success: 17	avg iter: 43.369998931884766	diff_suc: 69.38969539193546	dif_total: 154.52613934516907
+src: 1	tar: 6	total: 100	success: 34	avg iter: 36.970001220703125	diff_suc: 72.14560128660763	dif_total: 105.0392326593399
+src: 2	tar: 7	total: 100	success: 50	avg iter: 28.700000762939453	diff_suc: 47.07404292106629	dif_total: 73.25454827785492
+src: 3	tar: 8	total: 100	success: 38	avg iter: 35.869998931884766	diff_suc: 71.74624778095044	dif_total: 126.14678163051605
+src: 4	tar: 0	total: 100	success: 30	avg iter: 38.2400016784668	diff_suc: 64.64792064030965	dif_total: 106.17681691169739
+src: 5	tar: 1	total: 100	success: 30	avg iter: 39.93000030517578	diff_suc: 94.63916962941488	dif_total: 136.03781568527222
+src: 6	tar: 2	total: 100	success: 50	avg iter: 27.1299991607666	diff_suc: 28.672970447540283	dif_total: 49.45228562355042
+src: 7	tar: 3	total: 100	success: 42	avg iter: 32.029998779296875	diff_suc: 49.2602827776046	dif_total: 101.03231807231903
+src: 8	tar: 4	total: 100	success: 45	avg iter: 31.209999084472656	diff_suc: 49.216928503248425	dif_total: 72.15285281181336
+src: 9	tar: 5	total: 100	success: 22	avg iter: 41.45000076293945	diff_suc: 69.04362058639526	dif_total: 144.40805806159972

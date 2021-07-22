@@ -119,11 +119,25 @@ n_generation=20
 # n_pop=4
 # n_generation=2
 ```
+### <ins>**(Extra) Test the Tool Performance against Adversarial Attacks**<ins>
 
+#### **If you build your own docker**:
 
+Download the model from here:
 
+https://drive.google.com/drive/folders/1UDDFvnbWdP1nXZEUjBHo1id-eBt6620c?usp=sharing
 
+(Before building the dockerfile) Copy them to ``./test_attack/``, after build and login to the container:
+```
+bash test_attack.sh
+```
+#### **If you pull the pre-build one**:
+```
+cd test_attack
+bash test_attack.sh
+```
 
+The results will be saved under ``./test_attack/attack_result/``.
 
 <!-- 
 
