@@ -29,7 +29,8 @@ https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.
 ### <ins>**Pull Pre-build Docker Image**<ins> 
 
 ```
-docker pull zlijingtao/neurobfuscator
+docker pull zlijingtao/neurobfuscator:latest
+docker tag zlijingtao/neurobfuscator:lastest neurob
 ```
     
 ### <ins>**(Alternative) Build Docker Image**<ins> 
