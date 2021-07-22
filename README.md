@@ -139,6 +139,21 @@ bash test_attack.sh
 
 The results will be saved under ``./test_attack/attack_result/``.
 
+#### **Detail of obfuscation** [as supplementary material of the paper]
+
+Model-B (extravgg_3)
+```python
+decompo_list = [0, 0, 2, 4, 0, 4, 4, 0, 1, 4, 3] 
+deepen_list = [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+```
+Model-C (newvgg_9)
+```python
+decompo_list = [0, 0, 2, 4, 0, 4, 4, 0, 1, 4, 3] 
+deepen_list = [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+widen_list = [1.5, 1, 1.5, 1, 1.5, 1, 1, 1, 1, 1, 1]
+kerneladd_list = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+```
+
 <!-- 
 
 ## **Mannual Setup** (Not Recommended, cost hours and could result in failure)
