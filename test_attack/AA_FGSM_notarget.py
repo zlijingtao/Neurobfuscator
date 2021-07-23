@@ -207,25 +207,25 @@ class Attack():
 
 
 def main():
-    if not os.path.isdir("./data100"):
-        os.mkdir("./data100")
-    normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.247, 0.243, 0.261])
-    cifar10_val_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ]))
+    # if not os.path.isdir("./data100"):
+    #     os.mkdir("./data100")
+    # normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.247, 0.243, 0.261])
+    # cifar10_val_dataset = datasets.CIFAR10(root='./data', train=False, transform=transforms.Compose([
+    #         transforms.ToTensor(),
+    #         normalize,
+    #     ]))
 
-    val_loader = torch.utils.data.DataLoader(
-            cifar10_val_dataset,
-            batch_size=1, shuffle=False,
-            num_workers=4, pin_memory=True)
-    class_data = [[] for i in range(10)]
-    for i, (input, target) in enumerate(val_loader):
-        if len(class_data[target.item()]) < 100:
-            class_data[target.item()].append(input)
+    # val_loader = torch.utils.data.DataLoader(
+    #         cifar10_val_dataset,
+    #         batch_size=1, shuffle=False,
+    #         num_workers=4, pin_memory=True)
+    # class_data = [[] for i in range(10)]
+    # for i, (input, target) in enumerate(val_loader):
+    #     if len(class_data[target.item()]) < 100:
+    #         class_data[target.item()].append(input)
     
-    for i in range(10):
-        torch.save(torch.stack(class_data[i][:]),"data100/class_{}.pth.tar".format(i))
+    # for i in range(10):
+    #     torch.save(torch.stack(class_data[i][:]),"data100/class_{}.pth.tar".format(i))
     
     if not os.path.isdir("./attack_result"):
         os.mkdir("./attack_result")
