@@ -139,8 +139,10 @@ bash test_attack.sh
 
 The results will be saved under ``./test_attack/attack_result/``.
 
-#### **Detail of obfuscation** [as supplementary material of the paper]
-
+    
+    
+### <ins>**Details that miss in the paper**<ins>
+#### **Detail of obfuscation**
 Model-B (extravgg_3)
 ```python
 decompo_list = [0, 0, 2, 4, 0, 4, 4, 0, 1, 4, 3] 
@@ -154,6 +156,54 @@ widen_list = [1.5, 1, 1.5, 1, 1.5, 1, 1, 1, 1, 1, 1]
 kerneladd_list = [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
 ```
 
+#### **Detail of Metrics Selection for Cases A/B/C**
+```
+  Metrics {
+    Label: "Cycles"
+    Name: "sm__cycles_active.sum"
+  }
+  Metrics {
+    Label: "Mem Read"
+    Name: "dram__sectors_read.sum"
+  }
+  Metrics {
+    Label: "Mem Write"
+    Name: "dram__sectors_write.sum"
+  }
+  Metrics {
+    Label: "L1/TEX Hit Rate"
+    Name: "l1tex__t_sector_hit_rate.pct"
+  }
+  Metrics {
+    Label: "L1 Utilization"
+    Name: "l1tex__lsu_writeback_active.avg.pct_of_peak_sustained_active"
+  }
+  Metrics {
+    Label: "L1 Read Transactions"
+    Name: "l1tex__t_sectors_pipe_lsu_mem_global_op_ld.sum"
+  }
+  Metrics {
+    Label: "L1 Write Transactions"
+    Name: "l1tex__t_sectors_pipe_lsu_mem_global_op_st.sum"
+  }
+  Metrics {
+    Label: "L2 Utilization"
+    Name: "lts__t_sectors.avg.pct_of_peak_sustained_elapsed"
+  }
+  Metrics {
+    Label: "L2 Hit Rate"
+    Name: "lts__t_sector_hit_rate.pct"
+  }
+  Metrics {
+    Label: "L2 Read Transactions"
+    Name: "lts__t_sectors_op_read.sum"
+  }
+  Metrics {
+    Label: "L2 Write Transactions"
+    Name: "lts__t_sectors_op_write.sum"
+  }
+```
+    
 <!-- 
 
 ## **Mannual Setup** (Not Recommended, cost hours and could result in failure)
