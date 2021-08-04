@@ -73,6 +73,10 @@ The compiled runtime for the obfuscated model is saved under ``./seq_obfuscator/
 
 ![DeployLib](misc/figs/deploy_lib.PNG)
 
+#### <ins>**Known Issues**<ins>
+
+Unfortunately, some systems may fail to execute ``relay.build`` in a docker environment - throwing ``segmentation fault`` error. This can be circumvented by building a local environment. That is, setting up all necessary tools and library scripted in the Dockerfile in your local machien without using docker. This can be a tedious process.
+
 ### <ins>**Real Use Case**<ins>
 
 To use the tool in practice, first, you need script/coding the original neural network model following the tutorial in the tempalte ``./seq_obfuscator/model_file/model_template.py`` and properly label it using ``label_maker.py`` in the same directory. (*We currently only supports a specific format, need to match the format as other example networks in this directory*)
