@@ -25,11 +25,12 @@ Follow the instruction below to install the NVIDIA docker.
 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#docker
 
+On Linux, you should also [enable Docker CLI for the non-root user account](https://docs.docker.com/engine/install/linux-postinstall/) that will be used to run VS Code. (Otherwise, you have to use sudo all the time with docker command.)
     
 ### <ins>**Pull Pre-build Docker Image**<ins> 
 
 ```
-docker pull zlijingtao/neurobfuscator:latest
+docker pull zlijingtao/neurobfuscator:lastest
 docker tag zlijingtao/neurobfuscator:lastest neurob
 ```
     

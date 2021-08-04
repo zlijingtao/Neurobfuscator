@@ -200,7 +200,7 @@ class Tuner(object):
         self.best_flops = 0
         self.best_measure_pair = None
 
-    def load_history(self, data_set):
+    def load_history(self, data_set, min_seed_records=500):
         """load history data for transfer learning
 
         Parameters

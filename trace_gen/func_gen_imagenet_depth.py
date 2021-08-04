@@ -365,7 +365,7 @@ def main():
 
     INFO = [args.batch_size, args.num_classes, args.input_features, args.random_seed]
     save_label_from_string(dir_name, INFO, model_name)
-    return
+    
     size_fc, fc_bn = mlp_list_from_string(model_name)
     size_fc.append(args.num_classes)
     num_fc = len(size_fc)

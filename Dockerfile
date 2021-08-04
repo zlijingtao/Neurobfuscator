@@ -29,21 +29,21 @@ RUN python -m pip install torch==1.7.1+cu110 torchvision==0.8.2+cu110 torchaudio
 RUN python -m pip install tensorflow==1.13.1 xgboost sklearn psutil
 
 # LLVM
-RUN echo deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main \
+RUN echo deb http://apt.llvm.org/focal/ llvm-toolchain-focal-12 main \
      >> /etc/apt/sources.list.d/llvm.list && \
      wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add - && \
-     apt-get update && apt-get install -y llvm-10
+     apt-get update && apt-get install -y llvm-12
 
 RUN cd /usr && \
      git clone https://github.com/apache/incubator-tvm.git tvm --recursive && \
      cd /usr/tvm && \
-     git checkout 58c3413a3 && \
+     git checkout d38bef5 && \
      mkdir build && \
      cp cmake/config.cmake build
 
 COPY misc/copy2tvm/tvm /usr/tvm
 RUN  cd /usr/tvm/build && bash -c \
-     "echo set\(USE_LLVM llvm-config-10\) >> config.cmake && \
+     "echo set\(USE_LLVM llvm-config-12\) >> config.cmake && \
      echo set\(USE_CUDA ON\) >> config.cmake" && \
      cmake .. && \
      make -j4 
