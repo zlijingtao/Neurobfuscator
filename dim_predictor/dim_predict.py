@@ -3,7 +3,7 @@ import time
 import numpy as np
 import pickle
 import pandas as pd
-#TODO: Bagging all three and predict the average
+
 class Dim_predictor(object):
     def __init__(self, path_to_model = "./saved_models", n_estimators = 100, min_samples_split = 30, dataset_type = "full"):
         self.dataset_type = dataset_type

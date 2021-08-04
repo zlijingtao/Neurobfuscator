@@ -18,6 +18,9 @@ from torch_utils import setup_logger, summary, get_extra_entries, identify_model
 from predict import predictor
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
+'''NVPROF-specialized utility to generate time-line figure (for normal sequence obfuscation, please check torch_relay_obfuscate_nvprof instead)'''
+
+
 '''Randomly Generate Obfuscating operators'''
 '''wident_list: type: float, range: [1.0, inf), help: the factor to the output channel/dim of current layer'''
 '''decompo_list: type: int, range: [0, 4], help: 1: branch the oc by 2, 2: branch the oc by 4, 3: branch the ic by 2, 4: branch the ic by 4, 0: Do nothing'''

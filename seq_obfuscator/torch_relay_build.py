@@ -44,16 +44,10 @@ def prune_old_tasks(tasks, log_file):
             if history._query_inside(task.target, task.workload) is None:
                 if "depthwise_conv2d_nchw.cuda" in str(task.name) or "conv2d_nchw.cuda" in str(task.name) :
                     continue
-                # if "64, 5, 5" in str(task.workload):
-                #     print("Skip Task:", task)
-                #     continue
                 if "dense_small_batch.cuda" in str(task.name) and "10" not in str(task.workload):
                     print("Skip Task:", task)
                     continue
                 new_tasks.append(task)
-            # else:
-                # print(task.target)
-                # print(task.workload)
         return new_tasks
     else:
         return tasks
@@ -254,9 +248,6 @@ def prune_tvm(tasks, tvm_log_file, prune_list):
     with open(tvm_log_file, "r") as in_file:
         buf = in_file.readlines()
     
-    
-    # for task in tasks:
-        # print(task.name)
     new_file = tvm_log_file.split(".log")[0] + "_pruned.log"
     with open(new_file, "w") as out_file:
         if all(v == 0 for v in prune_list):
@@ -266,19 +257,12 @@ def prune_tvm(tasks, tvm_log_file, prune_list):
         else:
             for line in buf:
                 if next((True for task in tasks if process_task_string(str(task.workload)) in line), False):
-                    # print("line_id is", line_id)
                     splited_set1 = line.split(', {}], "config": ')
                     splited_set2 = splited_set1[1].split(', "result":')
-                    # splited_set3 = splited_set1[0].split('.cuda", ')
-                    # print(splited_set2[0])
-                    # param_list = json.loads(splited_set3[1])
                     dict = json.loads(splited_set2[0])
-                    # dict = prune_tvm_dict(dict, param_list, prune_list)
                     dict = prune_tvm_dict(dict, prune_list)
                     '''reform line'''
-                    # line = splited_set3[0] + '.cuda", ' + str(param_list).replace("None", "null").replace("'", '"') + ', {}], "config": ' + str(dict).replace("None", "null").replace("'", '"') + ', "result":' +splited_set2[1]
                     line = splited_set1[0] + ', {}], "config": ' + str(dict).replace("None", "null").replace("'", '"') + ', "result":' +splited_set2[1]
-                    # print(line)
                 out_file.write(line)
     return new_file
 

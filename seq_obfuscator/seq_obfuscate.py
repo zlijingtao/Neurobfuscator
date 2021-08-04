@@ -110,12 +110,6 @@ def apply_noise(dict, sigma, forbid_List):
         noise_list[7] = 0
     if 'fuse_list' in forbid_List:
         noise_list[8] = 0
-    # widen_arr = widen_arr + 0.125 * np.floor(1/2 * sigma * noise_vector[:widen_arr.shape[0]])
-    # decompo_arr = decompo_arr + 1/2 * sigma * noise_vector[widen_arr.shape[0]:widen_arr.shape[0]+decompo_arr.shape[0]]
-    # dummy_arr = dummy_arr + sigma * noise_vector[widen_arr.shape[0]+decompo_arr.shape[0]:widen_arr.shape[0]+decompo_arr.shape[0]+dummy_arr.shape[0]]
-    # deepen_arr = deepen_arr + 1/4 * sigma * noise_vector[widen_arr.shape[0]+decompo_arr.shape[0]+dummy_arr.shape[0]:-fuse_arr.shape[0]-kerneladd_arr.shape[0]-skipcon_arr.shape[0]]
-    # skipcon_arr = skipcon_arr + 1/4 * sigma * noise_vector[-fuse_arr.shape[0]-kerneladd_arr.shape[0]-skipcon_arr.shape[0]:-fuse_arr.shape[0]-kerneladd_arr.shape[0]]
-    # kerneladd_arr = kerneladd_arr + 1/4 * sigma * noise_vector[-fuse_arr.shape[0]-kerneladd_arr.shape[0]:-fuse_arr.shape[0]]
 
     noise = np.random.randn(1, widen_arr.shape[0])
     widen_arr = widen_arr + noise_list[0] * np.floor(1/4 * sigma * noise)
@@ -214,8 +208,6 @@ def crossover(parents, offspring_size):
     return offspring
 
 def mutation(offspring_list, sigma, forbid_List):
-    # length = len(offspring_list[0]["decompo_list"])
-    # conv_length = len(offspring_list[0]["kerneladd_list"])
     for i in range(len(offspring_list)):
         offspring_list[i] = apply_noise(offspring_list[i], sigma = sigma, forbid_List = forbid_List)
     return offspring_list
@@ -279,8 +271,6 @@ class obf_env(gym.Env):
             # print(model_name.split("_"), predict_type, num_hidden)
             self.predictor_list.append(predictor(log_dir, restore_step, self.label_file, self.sample_file, predict_type, normalize, num_hidden))
 
-        # self.predictor = predictor(log_dir, restore_step, self.label_file, self.sample_file, predict_type, normalize)
-
         self.done = False
         self.reward = 0.0
         self.clean_dict = self.Obfuscator.get_current_dict()
@@ -342,24 +332,10 @@ class obf_env(gym.Env):
                     reward = total_dist/ len(self.predictor_list) * (1/ ((self.cost/self.clean_cycle - 1.0 - self.budget)**2 + offset))
             else:
                 reward = total_dist/ len(self.predictor_list) *  (1/ offset)
-
-
-            # elif self.reward_type == "divide_cubic_residue_offseted":
-            #     reward = total_dist/ len(self.predictor_list) * (1/ (np.abs(self.cost/self.clean_cycle - 1.0 - self.budget)**3 + offset))
-            # elif self.reward_type == "divide_quartic_residue_offseted":
-            #     reward = total_dist/ len(self.predictor_list) * (1/ ((self.cost/self.clean_cycle - 1.0 - self.budget)**4 + offset))
-            # elif self.reward_type == "divide_residue":
-            #     reward = total_dist/ len(self.predictor_list) * (1/ (np.abs(self.cost/self.clean_cycle - 1.0 - self.budget) + 1e-7))
-            # elif self.reward_type == "divide_square_residue":
-            #     reward = total_dist/ len(self.predictor_list) * (1/ ((self.cost/self.clean_cycle - 1.0 - self.budget)**2 + 1e-7))
-            # elif self.reward_type == "divide_cubic_residue":
-            #     reward = total_dist/ len(self.predictor_list) * (1/ (np.abs(self.cost/self.clean_cycle - 1.0 - self.budget)**3 + 1e-7))
-            # elif self.reward_type == "divide_quartic_residue":
-            #         reward = total_dist/ len(self.predictor_list) * (1/ ((self.cost/self.clean_cycle - 1.0 - self.budget)**4 + 1e-7))
+        
         return reward, total_dist/ len(self.predictor_list), best_predict, distance_list
     def reset(self):
         """ Repeats NO-OP action until a new episode begins. """
-        # self.prepare(self.clean_dict)
         self.reward, self.cost, self.predict, avg_LER, distance_list= self.step(self.clean_dict)
         self.clean_cycle = self.cost
         self.clean_LER = avg_LER
@@ -405,7 +381,6 @@ if __name__ == '__main__':
     # print(len(parent_list))
 
     '''Set the model_name_list'''
-    # num_neuron_list = [128, 256, 512, 96, 64]
     num_neuron_list = [512, 256, 128, 96, 64]
     model_name_list = []
     for i in range(args.num_predictor_model):
@@ -457,7 +432,6 @@ if __name__ == '__main__':
         '''Settings'''
         num_iter = 5
         has_skip = args.has_skip
-        # initialize_list = [0.2, 0.4, 0.2, 0.2, 0.2, 0.4, 0.2]
         initialize_list = [0.2, 0.8, 0.4, 0.2, 0.2, 0.2, 0.4, 0.2]
         if_fixed_fuse = False
         if has_skip:
@@ -485,9 +459,6 @@ if __name__ == '__main__':
         "Run with genetic algorithm in full mode, and copy the best action here, to do cross test [test on other two cases]"
         '''Paste the action dict below'''
 
-        # act_dict = {'widen_list': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 'decompo_list': [0, 0, 0, 0, 0, 4, 0, 0, 1, 2, 4, 0, 1, 0, 1, 0, 0, 2, 3, 2, 1], 'dummy_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'deepen_list': [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], 'skipcon_list': [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'kerneladd_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prune_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'fuse_list': [9, 8, 9, 5, 9, 2, 9, 9, 9, 9, 4, 9, 9, 9, 9, 1, 9, 9, 3, 9, 9, 5, 1, 2, 8, 9, 9, 9, 8, 9, 9, 9, 9, 6, 9, 9, 6, 9, 9, 9, 9, 9, 7, 6, 9, 9, 9, 8, 9, 5, 9, 9, 9, 9, 8, 9, 9, 9, 8, 9, 0, 9, 6]}
-        # {'widen_list': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 'decompo_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 3, 0, 0, 3, 0, 0, 0, 4, 0, 0, 1, 0, 0, 3, 0, 0, 0, 0], 'dummy_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'deepen_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'skipcon_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'kerneladd_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prune_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'fuse_list': [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]}
-        # act_dict = {'widen_list': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.5, 1.0], 'decompo_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'dummy_list': [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0], 'deepen_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'skipcon_list': [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'kerneladd_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prune_list': [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], 'fuse_list': [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9]}
         act_dict = {'widen_list': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 'decompo_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0], 'dummy_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'deepen_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'skipcon_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'kerneladd_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prune_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'fuse_list': [5, 4, 2, 9, 3, 0, 6, 9, 3, 0, 5, 0, 3, 4, 1, 2, 7, 0, 5, 4, 2, 5, 6, 2, 0, 7, 3, 4, 6, 5, 0, 5, 0, 4, 8, 5, 6, 4, 8, 8, 8, 5, 7, 8, 6, 7, 5, 8, 8, 3, 6, 8, 6, 8, 6, 5, 5]}
 
         reward_A, cost_A, prediction_A, avg_LER_A, distance_list = env1.step(act_dict)
@@ -503,20 +474,16 @@ if __name__ == '__main__':
 
         reward_A, cost_A, prediction_A, avg_LER_A, distance_list = env1.step(act_dict)
 
-        # logger.debug("Prediction for time_only: {:1.12f}".format(best_reward))
         logger.debug("Reward: {:1.12f}\n".format(reward_A))
         logger.debug("Prediction: " + prediction_A)
         logger.debug("Latency: {:1.0f}\n".format(cost_A))
         logger.debug("Average LER: {:1.6f}".format(avg_LER_A))
         logger.debug("LER list: {}".format(str(distance_list)))
         
-
-        
         act_dict = {'widen_list': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 'decompo_list': [3, 0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 3, 0, 4, 0, 0, 1, 0, 1], 'dummy_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'deepen_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'skipcon_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'kerneladd_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prune_list': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'fuse_list': [9, 8, 8, 7, 4, 9, 9, 6, 9, 8, 8, 9, 7, 3, 6, 8, 8, 3, 7, 9, 8, 9, 8, 9, 9, 6, 6, 6, 8, 6, 7, 7, 6, 9, 5, 9, 9, 9, 4, 9, 9, 7, 5, 6, 7, 5, 4, 3, 4, 0, 7, 7, 7, 2, 9, 5, 8]}
         
         reward_A, cost_A, prediction_A, avg_LER_A, distance_list = env1.step(act_dict)
 
-        # logger.debug("Prediction for time_only: {:1.12f}".format(best_reward))
         logger.debug("Reward: {:1.12f}\n".format(reward_A))
         logger.debug("Prediction: " + prediction_A)
         logger.debug("Latency: {:1.0f}\n".format(cost_A))
@@ -527,7 +494,6 @@ if __name__ == '__main__':
 
         reward_A, cost_A, prediction_A, avg_LER_A, distance_list = env1.step(act_dict)
 
-        # logger.debug("Prediction for time_only: {:1.12f}".format(best_reward))
         logger.debug("Reward: {:1.12f}\n".format(reward_A))
         logger.debug("Prediction: " + prediction_A)
         logger.debug("Latency: {:1.0f}\n".format(cost_A))
@@ -539,7 +505,6 @@ if __name__ == '__main__':
         
         reward_A, cost_A, prediction_A, avg_LER_A, distance_list = env1.step(act_dict)
 
-        # logger.debug("Prediction for time_only: {:1.12f}".format(best_reward))
         logger.debug("Reward: {:1.12f}\n".format(reward_A))
         logger.debug("Prediction: " + prediction_A)
         logger.debug("Latency: {:1.0f}\n".format(cost_A))
@@ -554,7 +519,6 @@ if __name__ == '__main__':
         npop = args.n_pop
         n_generation = args.n_generation
         n_mating = int(npop/2)
-        # initialize_list = [0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1]
         initialize_list = [0.1, 0.4, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1]
         if_fixed_fuse = True
         mutation_sigma = 8.0

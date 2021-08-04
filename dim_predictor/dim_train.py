@@ -18,9 +18,7 @@ from sklearn.feature_selection import SelectKBest, SelectPercentile, chi2
 from sklearn.decomposition import PCA
 
 def get_pipeline(n_estimators = 50, min_samples_split = 10):
-    steps = [#("selection", SelectPercentile(chi2, percentile = 80)),
-             ("scaler", StandardScaler()),
-            #  ('pca', PCA(n_components=5)),
+    steps = [("scaler", StandardScaler()),
              ("classify", RandomForestRegressor(n_estimators=n_estimators,
                                                 verbose=2,
                                                 n_jobs=4,

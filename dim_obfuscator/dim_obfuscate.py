@@ -45,9 +45,6 @@ def extract_param_from_str(param_str):
     param = []
     param.append(round(float(param_str.split(", ")[0].split("Conv2D(")[1])))
     param.append(round(float(param_str.split(", ")[1])))
-    # param.append(round(float(param_str.split(", ")[2].replace("kernel_size = ", ""))))
-    # param.append(round(float(param_str.split(", ")[3].replace("stride = ", ""))))
-    # param.append(round(float(param_str.split(", ")[4].replace("padding = ", "").split(")")[0])))
     return np.asarray(param)
 
 def csv_to_time_overhead(csv_file):
@@ -266,20 +263,11 @@ class dim_obf_env(object):
         '''Calculate the total Cycle cost'''
         sample_file = "./env_file/lib_model_{}_obf_{}.csv".format(self.model_id, self.out_name)
 
-        # try:
-        #     df = pd.read_csv(csv_file, skiprows=2)
-        # except:
-        #     return 999999999
         try:
             df = pd.read_csv(sample_file, skiprows=2)
             trace_df = df[['ID', 'Metric Name', 'Metric Value']]
             reduced_trace_array = np.zeros((1, trace_df['ID'].nunique(), 5))
             full_trace_array = np.zeros((1, trace_df['ID'].nunique(), trace_df['Metric Name'].nunique()))
-
-            # df = pd.read_csv(sample_file, skiprows=2)
-            # trace_df = df[['ID', 'Metric Name', 'Metric Value']]
-            # reduced_trace_array = np.zeros((1, trace_df['ID'].nunique(), 5))
-            # full_trace_array = np.zeros((1, trace_df['ID'].nunique(), trace_df['Metric Name'].nunique()))
 
             old_row_id = -1
             count = 0
@@ -312,6 +300,7 @@ class dim_obf_env(object):
             reduced_trace_array = np.nan_to_num(reduced_trace_array)
             reduced_trace_list = list(reduced_trace_array[0, self.selected_entry, :])
             timeonly_trace_list = [reduced_trace_list[0]]
+
             #Append input image height/width
             if self.input_features == 3072:
                 full_trace_list.append(32)
@@ -490,12 +479,7 @@ def main():
 
     elif run_style == "provide":
         for i in range(1):
-            # act_dict = {'widen_list': [1.0, 1.0, 1.0], 'dummy_list': [0, 0, 0], 'kerneladd_list': [0, 0, 0], 'prune_list': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
-            # act_dict = {'widen_list': [1.125, 1.125, 1.2], 'dummy_list': [3, 0, 2], 'kerneladd_list': [0, 0, 0], 'prune_list': [3, 1, 0, 2, 3, 0, 0, 0, 1, 3, 1, 0, 2, 0]}
             act_dict = {'widen_list': [1.0, 1.125, 5.5], 'dummy_list': [3, 0, 2], 'kerneladd_list': [0, 0, 0], 'prune_list': [3, 1, 0, 2, 3, 0, 0, 0, 1, 3, 1, 0, 2, 0]}
-            # act_dict = {'widen_list': [1.0, 2.0, 1.0], 'dummy_list': [0, 4, 2], 'kerneladd_list': [1, 1, 0], 'prune_list': [3, 1, 0, 2, 0, 1, 1, 1, 1, 0, 0, 3, 2, 0]}
-            # act_dict = {'widen_list': [1.0, 1.0, 1.0], 'dummy_list': [0, 3, 3], 'kerneladd_list': [0, 1, 0], 'prune_list': [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0]}
-            # act_dict = {'widen_list': [1.0, 1.0, 1.0], 'dummy_list': [0, 0, 1], 'kerneladd_list': [0, 0, 0], 'prune_list': [0, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0]} # budget = 0.01
             env1.selected_entry = 2
             env1.assign_dict(act_dict)
             current_param, current_cycle = env1.get_3_avg_param()

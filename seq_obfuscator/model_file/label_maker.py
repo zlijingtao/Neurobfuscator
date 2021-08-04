@@ -1,5 +1,7 @@
 import numpy as np
 import argparse
+'''Use this file to generate npy label file for your own NN model, type the model_id and input_string in argument to generate'''
+
 
 def make_label_from_string(model_id, input_string):
     model_file = "model_{}.npy".format(model_id + 1)
@@ -27,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--input_string', default="0000000000000000000000000000000218")
     args = parser.parse_args()
 
-    
+    '''Some labeling example'''
     #input_string for id=4 (vgg11-cifar10): 02020020020021118
     #input_string for id=5 (resnet20-cifar10):  000000000600000060000218/0000000000000000000218
     #input_string for id=6 (vgg13-cifar10): 0020020020020021118
@@ -37,8 +39,5 @@ if __name__ == '__main__':
     #input_string for id=10 (mobilenetV2-imagenet): "0" * 52 + "218"
     #input_string for id=10 (mobilenetV2-imagenet): "046646646646646646646646646646646646646646646646646618"
     #input_string for id=11 (ENAS-net): 46006466246606466466260646606466628
-    # args.input_string = "0" * 18 + "218"
-    # args.input_string = "0000000000000000000000000000000218"
-    args.input_string = "0002460200000000001118"
     read_label_from_npy(args.input_file)
     make_label_from_string(args.model_id, args.input_string)

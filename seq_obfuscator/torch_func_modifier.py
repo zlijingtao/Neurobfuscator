@@ -6,21 +6,18 @@ import math
 import os
 import numpy as np
 import re
+'''Functions to add obfuscating knobs to the model template'''
+'''We use a brute-force way to extract the dimension information from the model and re-code with the added knobs'''
+'''(Can only work on models matched the template)'''
 
-#self.widen_list
-#self.kerneladd_list
-#self.decompo_list
-#self.deepen_list
-#self.skipcon_list
 
+'''Replace nn module in __init__() with added obfuscating knobs'''
 def replace_func(line, reduced_list):
     broken_list = (line.split("=")[0]).split(".")
     line_type = broken_list[1].replace(" ", "")
     num_conv = 0
     dim1 = 0
     dim2 = 0
-    # print(line_type)
-    # print(reduced_list)
     if "_bn" in line_type:
         broken_list = line_type.split("_bn")
         master_type = broken_list[0] + broken_list[1]
@@ -176,6 +173,7 @@ def replace_func(line, reduced_list):
         line = "\n        self.{} = torch.nn.BatchNorm1d(params[1], affine=False)\n\n".format(line_type)
     return line, dim1, dim2
 
+'''Replace nn module in forward() with added obfuscating knobs'''
 def replace_graph(line, reduced_list, dim_list, master_line_type = ""):
     line_type = line.split(".")[1].split("(")[0]
    
@@ -289,6 +287,7 @@ def replace_graph(line, reduced_list, dim_list, master_line_type = ""):
         line = line + "\n                    X1 = torch.add(X1, torch.tensor(dummy, device = cuda_device))\n\n"
     return line, dim_list
 
+'''Modify the original model template with added obfuscating knobs and save to a new file with _obf afterfix'''
 def func_modifier(model_py, modify_list, save_to_new_file = True):
     with open("./model_file/" + model_py, "r") as in_file:
         buf = in_file.readlines()
@@ -330,6 +329,6 @@ def func_modifier(model_py, modify_list, save_to_new_file = True):
             except IndexError:
                 out_file.write(line)
     return model_py
-
+'''Test_Run'''
 if __name__ == '__main__':
     func_modifier("model_4.py", ['reshape', 'conv0', 'conv1', 'maxpool', 'conv2', 'conv3', 'conv4', 'conv5', 'conv6', 'conv7', 'conv8', 'reshape', 'fc0', 'fc1', 'fc2', 'classifier', 'softmax'])

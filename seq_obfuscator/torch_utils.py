@@ -10,6 +10,7 @@ from torch_relay_build import torch_relay_func
 from torch_func_modifier import func_modifier
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
+'''Calculate Latency Overhead from csv file'''
 def csv_to_time_overhead(csv_file):
     df = pd.read_csv(csv_file, skiprows=2)
     # df = df.drop_duplicates(subset=['ID'])
@@ -20,7 +21,7 @@ def csv_to_time_overhead(csv_file):
     cost = trace_df['Metric Value'].sum()
     return cost
 
-
+'''Decode a sequence prediction'''
 def reverse_map(label_file, layer_int_to_name_map):
     label_array = np.load(label_file)
 
@@ -32,6 +33,7 @@ def reverse_map(label_file, layer_int_to_name_map):
             print("x=%d MAJOR ERROR? OUT OF PREDICTION SCOPE" % x)
     return str_decoded
 
+'''Modify the saved model parameters, this is necessary for a trained model in practice'''
 def modify_state_dict(model_file, state_dict, modify_list, widen_list, decompo_list, deepen_list, skipcon_list, kerneladd_list):
     j = -1
     # print("modify the state_dict to apply decomposition")
@@ -263,6 +265,7 @@ def modify_state_dict(model_file, state_dict, modify_list, widen_list, decompo_l
                 state_dict["{}.bias".format(modify_list[i])] = orig_bias
     return state_dict
 
+'''We are identifying a _obf model file to derive the search space. i.e. len(decompo_list)'''
 def identify_model(model_log_file, forbid1x1 = False):
     num_conv = 0
     num_linear = 0
@@ -300,6 +303,7 @@ def identify_model(model_log_file, forbid1x1 = False):
                 modify_list.append("softmax")
     return modify_list, decompo_list, kerneladd_list
 
+'''This funciton adds more entry to allow more fusable operation (after obfuscation, the number of fusion node increases accordingly, see misc/copy2tvm/tvm/src/transforms/fuse_ops.cc)'''
 def get_extra_entries(decompo_list, dummy_list, deepen_list, skipcon_list):
     #other list could also bring more entries. number of entry decompo list could bring is been offseted by +3.
     result = sum(dummy_list)

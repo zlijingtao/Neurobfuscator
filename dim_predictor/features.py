@@ -47,8 +47,6 @@ class FeatureMapper:
         extracted = []
         for feature_name, column_name, extractor in self.features:
             print(feature_name)
-            # if column_name == "Company" or column_name == "SourceName":
-            #     fea = extractor.transform(X[column_name].values.astype('U'))
             
             if column_name == ['LocationRaw','LocationNormalized']:
                 fea = extractor.transform(X['LocationRaw'],X['LocationNormalized'])
@@ -69,8 +67,6 @@ class FeatureMapper:
         extracted = []
         for feature_name, column_name, extractor in self.features:
             print(feature_name)
-            # if column_name == "Company" or column_name == "SourceName":
-            #     fea = extractor.fit_transform(X[column_name].values.astype('U'), y)
             if column_name == ['LocationRaw','LocationNormalized']:
                 fea = extractor.transform(X['LocationRaw'],X['LocationNormalized'])
             else:

@@ -10,6 +10,9 @@ from torch_relay_build import torch_relay_func
 from torch_func_modifier import func_modifier
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
+'''Contains some important utility functions for executing obfuscation'''
+
+'''Build a panda dict from massive trace file (need to generate this first) to build a dimension obfuscation dataset'''
 def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_img_dim):
     mstring_path = dir + file_prefix + ".mstring"
     npy_path = dir + file_prefix + ".npy"
@@ -34,9 +37,6 @@ def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_
             continue
         output_channels = extrac_oc_from_conv(conv_name)
         kernel, stride, pad = extrac_others_from_conv(conv_name)
-
-        # print("count {} - conv name is: {}, Image_Dim = {}, IC = {}, OC = {}".format(count, conv_name, img_dimension, input_channels, output_channels))
-
 
         # If current layer is a reslayer, then next one is still this layer.
         if "res" in model_name_split[int(np.floor(count))]:
@@ -67,6 +67,8 @@ def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_
             panda_dict['FeatureL2Read'].append(train_inputs[0, int(seg_table[i]), 9])
             panda_dict['FeatureL2Write'].append(train_inputs[0, int(seg_table[i]), 10])
         panda_dict['FeatureImageDim'].append(img_dimension)
+
+        #This is five target we want to predict
         panda_dict['TargetIC'].append(input_channels)
         panda_dict['TargetOC'].append(output_channels)
         panda_dict['TargetKernel'].append(kernel)
@@ -76,17 +78,16 @@ def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_
         img_dimension = change_img_dim(conv_name, img_dimension)
     return panda_dict
 
+'''Calculate Latency Overhead from csv file'''
 def csv_to_time_overhead(csv_file):
     df = pd.read_csv(csv_file, skiprows=2)
-    # df = df.drop_duplicates(subset=['ID'])
-    # print(df)
     trace_df = df[df['Metric Name'] == "Cycles"]
     trace_df= trace_df.replace(',','', regex=True)
     trace_df['Metric Value'] = pd.to_numeric(trace_df['Metric Value'])
     cost = trace_df['Metric Value'].sum()
     return cost
 
-
+'''Decode a sequence prediction'''
 def reverse_map(label_file, layer_int_to_name_map):
     label_array = np.load(label_file)
 
@@ -98,9 +99,10 @@ def reverse_map(label_file, layer_int_to_name_map):
             print("x=%d MAJOR ERROR? OUT OF PREDICTION SCOPE" % x)
     return str_decoded
 
+'''Modify the saved model parameters, this is necessary for a trained model in practice'''
 def modify_state_dict(model_file, state_dict, modify_list, widen_list, decompo_list, deepen_list, skipcon_list, kerneladd_list):
     j = -1
-    # print("modify the state_dict to apply decomposition")
+    # modify the state_dict to apply decomposition
     with open("./model_file/" + model_file, "r") as in_file:
         buf = in_file.readlines()
     for i in range(len(modify_list)):
@@ -329,6 +331,7 @@ def modify_state_dict(model_file, state_dict, modify_list, widen_list, decompo_l
                 state_dict["{}.bias".format(modify_list[i])] = orig_bias
     return state_dict
 
+'''We are identifying a _obf model file to derive the search space. i.e. len(decompo_list)'''
 def identify_model(model_log_file, forbid1x1 = False):
     num_conv = 0
     num_linear = 0
@@ -366,6 +369,7 @@ def identify_model(model_log_file, forbid1x1 = False):
                 modify_list.append("softmax")
     return modify_list, decompo_list, kerneladd_list
 
+'''This funciton adds more entry to allow more fusable operation (after obfuscation, the number of fusion node increases accordingly, see misc/copy2tvm/tvm/src/transforms/fuse_ops.cc)'''
 def get_extra_entries(decompo_list, dummy_list, deepen_list, skipcon_list):
     #other list could also bring more entries. number of entry decompo list could bring is been offseted by +3.
     result = sum(dummy_list)

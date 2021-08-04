@@ -75,7 +75,7 @@ The compiled runtime for the obfuscated model is saved under ``./seq_obfuscator/
 
 ### <ins>**Real Use Case**<ins>
 
-To use the tool in practice, first, you need script/coding the original neural network model ``./seq_obfuscator/model_file/`` and properly label it. (*We currently only supports a specific format, need to match the format as other example networks in this directory*)
+To use the tool in practice, first, you need script/coding the original neural network model following the tutorial in the tempalte ``./seq_obfuscator/model_file/model_template.py`` and properly label it using ``label_maker.py`` in the same directory. (*We currently only supports a specific format, need to match the format as other example networks in this directory*)
 
 Importantly, a reasonable large parameter need to be set by simply re-commenting and run the ``run above`` setting we provide. (*need to check all scripts*)
 

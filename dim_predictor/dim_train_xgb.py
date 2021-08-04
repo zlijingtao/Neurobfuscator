@@ -17,10 +17,9 @@ from sklearn.metrics import mean_absolute_error, make_scorer
 from sklearn.feature_selection import SelectKBest, SelectPercentile, chi2
 from sklearn.decomposition import PCA
 from xgboost.sklearn import XGBClassifier
+
 def get_pipeline(n_estimators = 50, min_samples_split = 10):
-    steps = [#("selection", SelectPercentile(chi2, percentile = 80)),
-             ("scaler", StandardScaler()),
-            #  ('pca', PCA(n_components=5)),
+    steps = [("scaler", StandardScaler()),
              ("classify", XGBClassifier(objective ='reg:linear', 
                   n_estimators = n_estimators, seed = 123))]
     return Pipeline(steps)

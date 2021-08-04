@@ -24,13 +24,12 @@ import importlib
 import json
 np.random.seed(1234)
 
+'''Calculate Latency Overhead from csv file'''
 def csv_to_time_overhead(csv_file, torch_trace = False):
     try:
         df = pd.read_csv(csv_file, skiprows=2)
     except:
         return 999999999
-    # df = df.drop_duplicates(subset=['ID'])
-    # print(df)
     trace_df = df[df['Metric Name'] == "Cycles"]
     trace_df= trace_df.replace(',','', regex=True)
     trace_df['Metric Value'] = pd.to_numeric(trace_df['Metric Value'])
@@ -39,27 +38,22 @@ def csv_to_time_overhead(csv_file, torch_trace = False):
         cost = cost/2
     return cost
 
+'''SKip TVM tuning if certain operation has already been tuned before.'''
 def prune_old_tasks(tasks, log_file):
     if os.path.isfile(log_file):
         new_tasks = []
         history = autotvm.record.ApplyHistoryBest(log_file)
         for task in tasks:
             if history._query_inside(task.target, task.workload) is None:
-                # print(task.name)
-                # if "64, 5, 5" in str(task.workload):
-                # print("Skip Task:", task)
-                # continue
                 if "dense_small_batch.cuda" in str(task.name) and "10" not in str(task.workload):
                     print("Skip Task:", task)
                     continue
                 new_tasks.append(task)
-            # else:
-                # print(task.target)
-                # print(task.workload)
         return new_tasks
     else:
         return tasks
 
+'''SKip TVM tuning if certain operation has already been tuned before.'''
 def do_tune(tasks, old_tasks, log_filename, n_trial = 20, tuner = 'xgb'):
     tmp_log_file = log_filename + ".tmp"
     tuner = 'xgb'
@@ -125,6 +119,7 @@ def is_square(apositiveint):
         seen.add(x)
   return True
 
+'''Pseudo-Prune, taking a pre-tuned task template and set values arbituarily to change the scheduling results'''
 def prune_tvm_dict(dict, prune_list):
     #Prune 0-13:
 
@@ -132,7 +127,8 @@ def prune_tvm_dict(dict, prune_list):
 
     #1-5: tile_y, tile_x, tile_rc, unroll_max_step, unroll_explicit (Winograd)
 
-    #6-13: tile_f, tile_y, tile_x, tile_rc, tile_ry, tile_rx, unroll_max_step, unroll_explicit (Standard)
+    #6-13: tile_f, tile_y, tile_x, tile_rc, tile_ry, tile_rx, unroll_max_step, unroll_explicit (Standard Conv)
+
     if len(dict["entity"]) == 1:
         choice_list = [64, 32, 16]
         if prune_list[0] > 0 and prune_list[0] <= len(choice_list): # prune_list[0] is to select one of the tiling of Dense, min: 0, do nothing, max: 4, set threshold = 64
@@ -153,7 +149,6 @@ def prune_tvm_dict(dict, prune_list):
             dividable = False
         if prune_list[1] != 0 and dividable: # prune_list[1] is to select one of the tile_y dim to be 1, make others to be the approximate square root of dim.
             dict["entity"][1][2] = [-1, 1, prod_a, prod_b]
-
 
         dim_x = np.prod(dict["entity"][2][2][1:])
         dividable = True
@@ -255,6 +250,7 @@ def prune_tvm_dict(dict, prune_list):
 
     return dict
 
+'''Executing the pseudo-prune'''
 def prune_tvm(tasks, tvm_log_file, prune_list):
 
     prune_list = [int(i) for i in prune_list]
@@ -262,9 +258,6 @@ def prune_tvm(tasks, tvm_log_file, prune_list):
     with open(tvm_log_file, "r") as in_file:
         buf = in_file.readlines()
 
-
-    # for task in tasks:
-        # print(task.name)
     new_file = tvm_log_file.split(".log")[0] + "_pruned.log"
     with open(new_file, "w") as out_file:
         if all(v == 0 for v in prune_list):
@@ -274,19 +267,12 @@ def prune_tvm(tasks, tvm_log_file, prune_list):
         else:
             for line in buf:
                 if next((True for task in tasks if process_task_string(str(task.workload)) in line), False):
-                    # print("line_id is", line_id)
                     splited_set1 = line.split(', {}], "config": ')
                     splited_set2 = splited_set1[1].split(', "result":')
-                    # splited_set3 = splited_set1[0].split('.cuda", ')
-                    # print(splited_set2[0])
-                    # param_list = json.loads(splited_set3[1])
                     dict = json.loads(splited_set2[0])
-                    # dict = prune_tvm_dict(dict, param_list, prune_list)
                     dict = prune_tvm_dict(dict, prune_list)
                     '''reform line'''
-                    # line = splited_set3[0] + '.cuda", ' + str(param_list).replace("None", "null").replace("'", '"') + ', {}], "config": ' + str(dict).replace("None", "null").replace("'", '"') + ', "result":' +splited_set2[1]
                     line = splited_set1[0] + ', {}], "config": ' + str(dict).replace("None", "null").replace("'", '"') + ', "result":' +splited_set2[1]
-                    # print(line)
                 out_file.write(line)
     return new_file
 
@@ -321,7 +307,6 @@ def torch_relay_func(args, compare_torch = False, autotvm_on = True):
     model = cnn(input_features, True, widen_list, decompo_list, dummy_list, deepen_list, skipcon_list, kerneladd_list).to(cuda_device)
 
 
-
     #step 2 load the obfuscated model parameters
     state_dict = torch.load("./model_file/{}.pickle".format(model_name))
     model.load_state_dict(state_dict)
@@ -351,19 +336,7 @@ def torch_relay_func(args, compare_torch = False, autotvm_on = True):
         tvm_log_file = "./obf_tmp_file/autotvm_%s.log" % model_name
 
         if not os.path.exists(tvm_log_file):
-            # make a copy of the pretuned-file to work with
-            # if "GTX 1660 SUPER" in GPUtil.getGPUs()[0].name:
-            #     pretuned_file="../trace_gen/gtx1660super/autotvm_tracegen.log"
-            #     shutil.copy(pretuned_file, tvm_log_file)
-            # elif "RTX 3090" in GPUtil.getGPUs()[0].name:
-            #     pretuned_file="../trace_gen/rtx3090/autotvm_tracegen.log"
-            #     shutil.copy(pretuned_file, tvm_log_file)
-            # else:
-            #     print("Not pretune on your GPU type, generate new")
             open(tvm_log_file, 'a').close()
-
-
-
 
     if not autotvm_on:
         tvm_log_file = "./obf_tmp_file/faketvm_%s.log" % model_name
@@ -397,8 +370,11 @@ def torch_relay_func(args, compare_torch = False, autotvm_on = True):
     lib.export_library("./deploy_lib/lib_{}_{}.tar".format(model_name, args.out_name))
     lib_name = "lib_{}_{}".format(model_name, args.out_name)
 
+
+    #step 4 profiling the NN model with NCU
     os.system('ncu --target-processes application-only --print-kernel-base function --log-file ./env_file/{}.csv --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_relay_test.py --batch_size {} --input_features {} --lib_name {}'.format(lib_name, args.batch_size, args.input_features, lib_name))
 
+    '''(Optional) Compare the performance of the deployable generated using TVM with plain pytorch's'''
     if compare_torch:
 
         os.system('ncu --target-processes application-only --print-kernel-base function --log-file ./env_file/torch_{}.csv --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_test.py --batch_size {} --input_features {} --lib_name {}'.format(lib_name, args.batch_size, args.input_features, lib_name))

@@ -252,43 +252,6 @@ def main():
     skipcon_list = [0] * len(decompo_list)
     prune_list =  [0] * 14
 
-    
-    # widen_list[1] = 1.25
-    # decompo_list[2] = 1
-    # decompo_list[0] = 0
-    # deepen_list[1] = 1
-    # skipcon_list[1] = 1
-    # prune_list = [3] * 14
-    # decompo_list[2] = 2
-    # decompo_list[3] = 3
-    # dummy_list[2] = 5
-    # widen_list[1] = 1.00
-    # widen_list[5] = 1.50
-    # kerneladd_list[4] = 1
-    
-    # '''Set the obfuscating operators here (default value for each entry is 5 in decompo_list)'''
-    # decompo_list[2] = 2
-    # decompo_list[3] = 3
-
-    # '''Set the obfuscating operators here (default value for each entry is 0 in dummy_list)'''
-    # dummy_list[2] = 5
-
-    # '''Set the obfuscating operators here (default value for each entry is 1.0 in widen_list)'''
-    # widen_list[1] = 1.00
-    
-    # widen_list[5] = 1.50
-
-    # '''Set the obfuscating operators here (default value for each entry is 0 in deepen_list)'''
-    # deepen_list[1] = 0
-
-    # '''Set the obfuscating operators here (default value for each entry is 0 in skipcon_list)'''
-    # skipcon_list[1] = 0
-
-    # '''Set the obfuscating operators here (default value for each entry is 0 in kerneladd_list)'''
-    # kerneladd_list[4] = 1
-
-    #obfuscate the model with the lists
-    
     #step 1 add API to the function
     model_file = model_name + ".py"
     new_model_file = func_modifier(model_file, modify_list)
