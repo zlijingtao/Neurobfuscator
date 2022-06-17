@@ -326,7 +326,8 @@ We provide a sepcial Trace Section, please move it into customizable Trace Secti
 **(if using ncu 2020.3.0)** cp torch_profiling/ncu_section/ImportantTraceAnalysis.section ~/Documents/NVIDIA Nsight Compute/2020.3.0/Sections/ -->
 
 <h3 id="#important-notification">Important Notification</h3>
-For the experiments presented in the published version (https://ieeexplore.ieee.org/document/9702279) Section VI. C "Effectiveness of NeurObfuscator", the experiments are done by directly training using the [obfuscated pytorch scripts](https://github.com/zlijingtao/Neurobfuscator/blob/master/seq_obfuscator/model_file/model_10_obf.py), where 6 script-level obfuscating knobs are added. And we can get high validation accuracy as a result. However, this is a result of rushing in rebuttal phase, and it is not rigorous.
+
+For the experiments presented in the [published version](https://ieeexplore.ieee.org/document/9702279) Section VI. C "Effectiveness of NeurObfuscator", the experiments are done by directly training using the [obfuscated-pytorch-scripts](/seq_obfuscator/model_file/model_10_obf.py), where 6 script-level obfuscating knobs are added. And we can get high validation accuracy as a result. However, this is a result of rushing in rebuttal phase, and it is not rigorous.
     
 **We want to point out, effectiveness should be properly evaluated by the attacker's view** - which is the extracted model from the trace of obfuscated model since attacker cannot get access to the pytorch scripts. 
     
