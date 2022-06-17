@@ -2,6 +2,8 @@
 
 ![Framework](misc/figs/framework.svg)
 
+## [Disclaimer update: 06/17/2022](#disclaimer-1)
+
 ## Description
 
 (This work is to appear in HOST 2021! Cleaned-up version/Documentary for detailed usage will be updated soon.)
@@ -323,6 +325,5 @@ We provide a sepcial Trace Section, please move it into customizable Trace Secti
 
 **(if using ncu 2020.3.0)** cp torch_profiling/ncu_section/ImportantTraceAnalysis.section ~/Documents/NVIDIA Nsight Compute/2020.3.0/Sections/ -->
 
-
-
+<h3 id="#disclaimer">Disclaimer</h3>
 
