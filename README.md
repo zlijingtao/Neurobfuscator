@@ -2,6 +2,18 @@
 
 ![Framework](misc/figs/framework.svg)
 
+## Cite the work:
+```
+@inproceedings{li2021neurobfuscator,
+  title={NeurObfuscator: A Full-stack Obfuscation Tool to Mitigate Neural Architecture Stealing},
+  author={Li, Jingtao and He, Zhezhi and Rakin, Adnan Siraj and Fan, Deliang and Chakrabarti, Chaitali},
+  booktitle={2021 IEEE International Symposium on Hardware Oriented Security and Trust (HOST)},
+  pages={248--258},
+  year={2021},
+  organization={IEEE}
+}
+```
+
 ## [Important Notification](#important-notification-1)
 
 ## Description
