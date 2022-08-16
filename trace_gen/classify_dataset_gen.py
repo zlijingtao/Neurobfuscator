@@ -9,7 +9,7 @@ import pandas as pd
 import os
 import pickle
 
-from func_generator import layer_name_to_int_map
+from func_gen_cifar import layer_name_to_int_map
 #Sequential Model Generator. Search space is limited.
 
 def transform_dd(train_inputs, train_targets,seg_table):

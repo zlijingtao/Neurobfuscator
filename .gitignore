@@ -6,6 +6,7 @@ __pycache__/
 trace_gen/trace/*.csv
 trace_gen/trace/*.npy
 seq_predictor/obfuscator/dataset/*.csv
+seq_predictor/obfuscator/predictor/**/
 trace_gen/trace/*.mstring
 trace_gen/trace/*.log
 trace_gen/*.log
@@ -18,6 +19,8 @@ dim_obfuscator/env_file/*.csv
 dim_obfuscator/obf_tmp_file/*.log
 dim_obfuscator/obf_tmp_file/*.tmp
 dim_obfuscator/*.log
+
+
 *.code-workspace
 .vscode/
 first_ctc/

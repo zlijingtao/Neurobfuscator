@@ -948,8 +948,6 @@ class custom_cnn_4(torch.nn.Module):
         X1 = self.logsoftmax(X1)
         return X1
 
-
-
 batch_size = 1
 input_features = 3072
 torch.manual_seed(1234)

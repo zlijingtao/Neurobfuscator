@@ -70,8 +70,10 @@ Test the tool using provided ``run.sh`` script to go through all necessary steps
 6) Dimension Predictor Validation
 7) Dimension Obfuscation
 
+cd NeurObfuscator, we create a container and mount local folder for easy dev
 ```
-docker run --gpus all -it neurob
+docker run --gpus all -it -v $(pwd):/root/neurob neurob
+
 bash run.sh
 ```
 
