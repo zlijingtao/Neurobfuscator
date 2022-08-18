@@ -238,9 +238,10 @@ def seq_from_string(model_name):
     label_sequence.append(layer_name_to_int_map['softmax'])
     return label_sequence
 
-def save_label_from_string(dir_name, info_list, model_name):
-    label_fname = dir_name + "complex_batch_{}_nclass_{}_infeat_{}_seed_{}.npy".format(info_list[0], info_list[1], info_list[2], info_list[3])
-    mstring_fname = dir_name + "complex_batch_{}_nclass_{}_infeat_{}_seed_{}.mstring".format(info_list[0], info_list[1], info_list[2], info_list[3])
+def save_label_from_string(dir_name, output_file, model_name):
+    file_name = output_file.replace(".csv", "")
+    label_fname = dir_name + "{}.npy".format(file_name)
+    mstring_fname = dir_name + "{}.mstring".format(file_name)
     label_sequence = seq_from_string(model_name)
     np.save(label_fname, np.asarray(label_sequence))
     text_file = open(mstring_fname, "w")
@@ -265,7 +266,7 @@ def main():
 
     model_name = model_name_from_seed(args.random_seed)
     # for test only
-    model_name = 'mlp_512_256_128_bn1'
+    # model_name = 'mlp_512_256_128_bn1'
 
     logging.basicConfig(level=logging.DEBUG, filename=dir_name + "trace_gen.log", filemode="a+",
                         format="%(asctime)-15s %(levelname)-8s %(message)s")
@@ -273,9 +274,7 @@ def main():
 
     print("Seed: {}, model name:{}".format(args.random_seed, model_name))
 
-
-    INFO = [args.batch_size, args.num_classes, args.input_features, args.random_seed]
-    save_label_from_string(dir_name, INFO, model_name)
+    save_label_from_string(dir_name, args.output_file, model_name)
 
     size_fc, fc_bn = mlp_list_from_string(model_name)
     size_fc.append(args.num_classes)
@@ -403,9 +402,13 @@ def main():
                 out_file.write(line)
             except:
                 out_file.write(line)
-    from torch_tvm_prof import run_tvm_torch
-    run_tvm_torch()
-    os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_tvm_execute.py --batch_size {} --input_features {}'.format(args.output_file, args.batch_size, args.input_features))
-
+    
+    if args.file_name == "torch_tvm_prof":
+        from torch_tvm_prof import run_tvm_torch
+        run_tvm_torch()
+        os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_tvm_execute.py --batch_size {} --input_features {}'.format(args.output_file, args.batch_size, args.input_features))
+    elif args.file_name == "torch_prof":
+        os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_execute_infer.py'.format(args.output_file))
+    
 if __name__ == '__main__':
     main()

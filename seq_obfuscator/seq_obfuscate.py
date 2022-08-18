@@ -244,7 +244,7 @@ def ga_extract_from_history(history, num_pop):
     return parent_list
 
 class obf_env(gym.Env):
-    def __init__(self, batch_size, input_features, nn_id = 4, normalize = "smart", model_name_list = ["deepsniffer_LSTM_both_autotvm_smart_64_cifar10"], restore_step = 149, reward_type = "divide_square_residue", autotvm_on = True, n_trial = 200, tuner = 'xgb', budget = 0.1):
+    def __init__(self, batch_size, input_features, nn_id = 4, normalize = "smart", model_name_list = ["deepsniffer_LSTM_both_autotvm_smart_64_cifar10"], restore_step = 149, reward_type = "divide_square_residue", autotvm_on = True, n_trial = 200, tuner = 'xgb', budget = 0.1, num_hidden = 512):
         self.reward_type = reward_type
         self.model_id = nn_id
         self.batch_size=batch_size
@@ -261,14 +261,12 @@ class obf_env(gym.Env):
         self.predictor_list = []
         for model_name in model_name_list:
             log_dir = "../seq_predictor/obfuscator/predictor/{}".format(model_name)
-            num_hidden = int(model_name.split("_")[-2])
             if model_name.split("_")[1] == "full":
                 predict_type = "full"
             elif model_name.split("_")[1] == "timeonly":
                 predict_type = "time_only"
             elif "deepsniffer" in model_name.split("_")[1]:
                 predict_type = "reduced"
-            # print(model_name.split("_"), predict_type, num_hidden)
             self.predictor_list.append(predictor(log_dir, restore_step, self.label_file, self.sample_file, predict_type, normalize, num_hidden))
 
         self.done = False
@@ -345,6 +343,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name_base', type=str, default='deepsniffer_LSTM_both_autotvm_smart')
     parser.add_argument('--model_name_afterfix', type=str, default='cifar10')
+    parser.add_argument('--num_hidden', type=int, default=512, help='number of hidden units in the LSTM model')
     parser.add_argument('--num_predictor_model', type=int, default=5)
     parser.add_argument('--run_option', type=str, default='random')
     parser.add_argument('--restore_step', type=int, default=149, help='Global step to restore from checkpoint.')
@@ -407,7 +406,7 @@ if __name__ == '__main__':
 
     logger = setup_logger('obfuscate_logger', log_file, level = logging.DEBUG, console_out = True)
 
-    env1 = obf_env(args.batch_size, args.input_features, args.nn_id, args.normalize, model_name_list, args.restore_step, args.reward_type, args.autotvm_on, args.n_trial, args.tuner, args.budget)
+    env1 = obf_env(args.batch_size, args.input_features, args.nn_id, args.normalize, model_name_list, args.restore_step, args.reward_type, args.autotvm_on, args.n_trial, args.tuner, args.budget, args.num_hidden)
     logger.debug("Initialize environment..\n")
 
     orig_reward, orig_cycle, orig_sequence, LER_list = env1.reset()

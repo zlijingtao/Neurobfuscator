@@ -153,7 +153,7 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
             layer_indicator = ['fused_nn_conv2d', 'fused_nn_contrib_conv2d', 'fused_nn_max_pool2d', 'fused_nn_avg_pool2d', 'fused_nn_dense', 'fused_nn_log_softmax_1_kernel1', 'fused_nn_log_softmax_kernel1']
             must_include = "kernel0"
         elif trace_type == "pytorch":
-            layer_indicator = ['vectorized_elementwise_kernel', 'generateWinogradTilesKernel', 'max_pool_forward_nchw', 'bn_fw_inf_1C11_kernel_NCHW', 'bn_pointwise', 'batch_norm_transform_input_kernel', 'gemv2T_kernel_val', 'softmax_warp_forward']
+            layer_indicator = []
             must_include = ""
         else:
             layer_indicator = []
@@ -218,26 +218,36 @@ def fuse_label(label_array, no_repeat = False):
     return new_label_array
 
 def find_match(string, string_list, must_include):
-    must_include_t = must_include
-    if "conv" in string:
+    if "conv" in string or "scudnn" in string or "Conv" in string or "gemmSN_NN" in string or "sgemm" in string or "gemv2N_kernel" in string:
         layer_type = 0
-    elif "dense" in string:
+    # elif  "flip_filter" in string:
+    #     layer_type = 6
+    elif "winograd" in string:
+        layer_type = 0
+        must_include = "kernel1"
+    elif "dense" in string or "gemv2T_kernel_val" in string or "dot_kernel" in string:
         layer_type = 1
-    elif "max_pool" in string:
+    elif "max_pool" in string or "pool2d" in string:
         layer_type = 2
     elif "softmax" in string:
         layer_type = 8
     else:
-        layer_type = 8
+        layer_type = 10
     # Make a exception for winograd kernel, mark the second kernel
-    if "winograd" in string:
-        must_include_t = "kernel1"
-    # Otherwise, must_include is "kernel0"
-    for item in string_list:
-        if item == string:
+    if layer_type == 10:
+        return layer_type, False
+    if string_list:
+        for item in string_list:
+            if item == string:
+                return layer_type, True
+            elif (item in string) and (must_include in string):
+                return layer_type, True
+    else: # if string_list is not given
+        if must_include == "":
             return layer_type, True
-        elif (item in string) and (must_include_t in string):
-            return layer_type, True
+        else:
+            if must_include in string:
+                return layer_type, True
     return layer_type, False
 
 
@@ -462,7 +472,7 @@ def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_
     return panda_dict
 
 
-def collect_feature_target(dir, operator_name = 'conv', reduced = True, time_only = False, include_name = "complex_batch_1_nclass_10_infeat_3072", prefix_output = "train_data", orig_img_dim = 32):
+def collect_feature_target(dir, operator_name = 'conv', reduced = True, time_only = False, include_name = "complex_batch_1_nclass_10_infeat_3072", prefix_output = "train_data", orig_img_dim = 32, trace_type = "tvm"):
     train_inputs_list = []
     train_targets_sparse_list = []
     train_seq_len_list = []
@@ -514,7 +524,7 @@ def collect_feature_target(dir, operator_name = 'conv', reduced = True, time_onl
             file_type = filename.split('.')[1]
             if file_type == 'csv':
                 print(filename)
-                seg_tuble = trace_csv_seg(dir + filename)
+                seg_tuble = trace_csv_seg(dir + filename, trace_type = trace_type)
                 if seg_tuble is None:
                     continue
                 else:
@@ -543,17 +553,18 @@ if __name__ == '__main__':
     parser.add_argument("--dataset_type", type=str, default="full", help='Pick dataset you want to generate', choices=("reduced", "full", "time_only"))
     parser.add_argument("--selection", type=str, default="complex_batch_1_nclass_1000_infeat_150528", help='Type a string, only contains which will be generated')
     parser.add_argument("--prefix_output", type=str, default="cifar10_train_data", help='prefix for the dataset output')
+    parser.add_argument("--trace_type", type=str, default="tvm", help='trace_type')
     parser.add_argument("--orig_img_dim", type=int, default=224, help='original image dimension')
     args = parser.parse_args()
     if args.dataset_type == "reduced":
-        collect_feature_target('trace/', 'conv', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'fc', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'depth', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'fc', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'depth', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
     elif args.dataset_type == "full":
-        collect_feature_target('trace/', 'conv', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'fc', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'depth', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'fc', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'depth', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
     elif args.dataset_type == "time_only":
-        collect_feature_target('trace/', 'conv', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'fc', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
-        collect_feature_target('trace/', 'depth', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'fc', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)
+        collect_feature_target('trace/', 'depth', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim, trace_type = args.trace_type)

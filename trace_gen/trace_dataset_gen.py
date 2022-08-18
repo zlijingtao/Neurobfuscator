@@ -114,7 +114,7 @@ def trace_csv_numpy(trace_file = "None"):
         reduced_trace_array = np.nan_to_num(reduced_trace_array)
     return full_trace_array, reduced_trace_array
 
-def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repeat = False):
+def trace_csv_seg(trace_file = "None", trace_type = "tvm", no_repeat = False):
     seg_array = None
     seg_list = []
     try:
@@ -143,6 +143,10 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
         label_name = trace_prefix + '.npy'
         label_array = np.load(label_name)
         # print(label_array)
+        # if trace_type != "tvm":
+        #     fuse = False
+        # else:
+        fuse = True
         if fuse:
             label_array = fuse_label(label_array, no_repeat = no_repeat)
             # np.save(label_name, label_array)
@@ -154,11 +158,13 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
             layer_indicator = ['fused_nn_conv2d', 'fused_nn_contrib_conv2d', 'fused_nn_max_pool2d', 'fused_nn_avg_pool2d', 'fused_nn_dense', 'fused_nn_log_softmax_1_kernel1', 'fused_nn_log_softmax_kernel1']
             must_include = "kernel0"
         elif trace_type == "pytorch":
-            layer_indicator = ['vectorized_elementwise_kernel', 'generateWinogradTilesKernel', 'max_pool_forward_nchw', 'bn_fw_inf_1C11_kernel_NCHW', 'bn_pointwise', 'batch_norm_transform_input_kernel', 'gemv2T_kernel_val', 'softmax_warp_forward']
+            # layer_indicator = ['vectorized_elementwise_kernel', 'implicit_convolve_sgemm', 'scudnn', 'max_pool_forward_nchw', 'gemv2T_kernel_val', 'softmax_warp_forward', "dot_kernel", "conv2d_grouped_direct_kernel"]
+            layer_indicator = []
             must_include = ""
         else:
             layer_indicator = []
             must_include = ""
+        # print(layer_indicator)
         if trace_file != "None":
             df = pd.read_csv(trace_file, skiprows=2)
             try:
@@ -173,6 +179,7 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
             count = 0
             previous_seg = None
             for index, row in trace_df.iterrows():
+                # print(row['Kernel Name'])
                 layer_type, if_seg = find_match(row['Kernel Name'], layer_indicator, must_include)
                 if if_seg:
                     if previous_seg != None:
@@ -185,10 +192,10 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
                         seg_list.append(str(row['ID']))
                     previous_seg = layer_type
         if len(seg_list) != number_layer:
-            pass
-            # print(trace_file)
-            # print(seg_list)
-            # print(label_array)
+            # pass
+            print(trace_file)
+            print(seg_list)
+            print(label_array)
         if len(seg_list) == number_layer:
             seg_array = np.asarray(seg_list)
             # print(trace_file)
@@ -219,28 +226,38 @@ def fuse_label(label_array, no_repeat = False):
     return new_label_array
 
 def find_match(string, string_list, must_include):
-    must_include_t = must_include
-    if "conv" in string:
+    if "conv" in string or "scudnn" in string or "Conv" in string or "gemmSN_NN" in string or "sgemm" in string or "gemv2N_kernel" in string:
         layer_type = 0
-    elif "dense" in string:
+    # elif  "flip_filter" in string:
+    #     layer_type = 6
+    elif "winograd" in string:
+        layer_type = 0
+        must_include = "kernel1"
+    elif "dense" in string or "gemv2T_kernel_val" in string or "dot_kernel" in string:
         layer_type = 1
-    elif "max_pool" in string:
+    elif "max_pool" in string or "pool2d" in string:
         layer_type = 2
     elif "softmax" in string:
         layer_type = 8
     else:
-        layer_type = 8
+        layer_type = 10
     # Make a exception for winograd kernel, mark the second kernel
-    if "winograd" in string:
-        must_include_t = "kernel1"
-    # Otherwise, must_include is "kernel0"
-    for item in string_list:
-        if item == string:
+    if layer_type == 10:
+        return layer_type, False
+    if string_list:
+        for item in string_list:
+            if item == string:
+                return layer_type, True
+            elif (item in string) and (must_include in string):
+                return layer_type, True
+    else: # if string_list is not given
+        if must_include == "":
             return layer_type, True
-        elif (item in string) and (must_include_t in string):
-            return layer_type, True
+        else:
+            if must_include in string:
+                return layer_type, True
     return layer_type, False
-def dump_to_pickel(dir, reduced = True, time_only = False, include_name = "batch", prefix_output = "train_data", seed_lower_range = 0 , seed_upper_range = 9999, blend_complex = 0):
+def dump_to_pickel(dir, reduced = True, time_only = False, include_name = "batch", prefix_output = "train_data", seed_lower_range = 0 , seed_upper_range = 9999, blend_complex = 0, trace_type = "tvm"):
     train_inputs_list = []
     train_targets_sparse_list = []
     train_seq_len_list = []
@@ -262,7 +279,7 @@ def dump_to_pickel(dir, reduced = True, time_only = False, include_name = "batch
                 # print("adding complex batch")
                 # for sample in self.sample_list:
                 if file_type == 'csv':
-                    seg_tuble = trace_csv_seg(dir + filename)
+                    seg_tuble = trace_csv_seg(dir + filename, trace_type = trace_type)
                     if seg_tuble is None:
                         print("Error, no seg_table")
                         continue
@@ -295,7 +312,7 @@ def dump_to_pickel(dir, reduced = True, time_only = False, include_name = "batch
             file_type = filename.split('.')[1]
             # for sample in self.sample_list:
             if file_type == 'csv':
-                seg_tuble = trace_csv_seg(dir + filename)
+                seg_tuble = trace_csv_seg(dir + filename, trace_type = trace_type)
                 if seg_tuble is None:
                     print("Error, no seg_table")
                     continue
@@ -348,13 +365,14 @@ if __name__ == '__main__':
     parser.add_argument("--dataset_type", type=str, default="time_only", help='Pick dataset you want to generate', choices=("reduced", "full", "time_only"))
     parser.add_argument("--selection", type=str, default="batch", help='Type a string, only contains which will be generated')
     parser.add_argument("--prefix_output", type=str, default="train_data", help='prefix for the dataset output')
+    parser.add_argument("--trace_type", type=str, default="tvm", help='trace_type')
     parser.add_argument("--seed_lower_range", type=int, default=0, help='seed_lower_range')
     parser.add_argument("--seed_upper_range", type=int, default=9999, help='seed_upper_range')
     parser.add_argument("--blend_complex", type=int, default=0, help='complex sample to blend')
     args = parser.parse_args()
     if args.dataset_type == "reduced":
-        dump_to_pickel('trace/', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex)
+        dump_to_pickel('trace/', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex, trace_type = args.trace_type)
     elif args.dataset_type == "full":
-        dump_to_pickel('trace/', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex)
+        dump_to_pickel('trace/', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex, trace_type = args.trace_type)
     elif args.dataset_type == "time_only":
-        dump_to_pickel('trace/', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex)
+        dump_to_pickel('trace/', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, seed_lower_range = args.seed_lower_range, seed_upper_range = args.seed_upper_range, blend_complex = args.blend_complex, trace_type = args.trace_type)

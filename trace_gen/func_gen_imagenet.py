@@ -404,9 +404,11 @@ def main():
             except:
                 out_file.write(line)
 
-    from torch_tvm_prof import run_tvm_torch
-    run_tvm_torch()
-    os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_tvm_execute.py --batch_size {} --input_features {}'.format(args.output_file, args.batch_size, args.input_features))
-
+    if args.file_name == "torch_tvm_prof":
+        from torch_tvm_prof import run_tvm_torch
+        run_tvm_torch()
+        os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_tvm_execute.py --batch_size {} --input_features {}'.format(args.output_file, args.batch_size, args.input_features))
+    elif args.file_name == "torch_prof":
+        os.system('ncu --target-processes application-only --print-kernel-base function --log-file trace/{} --csv --kernel-regex-base function --launch-skip-before-match 0  --profile-from-start 1 --clock-control base --print-fp --apply-rules yes --section ImportantTraceAnalysis python torch_execute_infer.py'.format(args.output_file))
 if __name__ == '__main__':
     main()
