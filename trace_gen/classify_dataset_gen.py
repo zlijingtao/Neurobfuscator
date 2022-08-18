@@ -145,8 +145,7 @@ def trace_csv_seg(trace_file = "None", fuse = True, trace_type = "tvm", no_repea
         # print(label_array)
         if fuse:
             label_array = fuse_label(label_array, no_repeat = no_repeat)
-            # np.save(label_name, label_array)
-        # print(label_array)
+        print(label_array)
         number_layer = label_array.shape[0]
         # print(layer_name_to_int_map)
         # print(number_layer)
@@ -257,7 +256,10 @@ def extrac_others_from_conv(conv_name):
         kernel_size = 3
         stride_size = 1
         padding_size = 1
-
+    elif "depth" in conv_name:
+        kernel_size = 3
+        stride_size = 1
+        padding_size = 1
     else:
         kernel_size = int(conv_name.split("p")[1])
         stride_size = int(conv_name.split("p")[2])
@@ -275,7 +277,7 @@ def change_img_dim(conv_name, img_dimension):
             img_dimension = int(img_dimension/2)
     return img_dimension
 
-def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_img_dim):
+def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_img_dim, operator_name = 'conv', n_class = 10):
     mstring_path = dir + file_prefix + ".mstring"
     npy_path = dir + file_prefix + ".npy"
     label_array = np.load(npy_path)
@@ -283,66 +285,184 @@ def panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_
     my_file = open(mstring_path, "r")
     content_list = my_file.readlines()
     model_name = content_list[0]
-    model_name_split = model_name.split("_mlp")[0].split("_")
-    count = 1
-    pre_conv = "3p"
-    img_dimension = orig_img_dim
-    for i in range(len(seg_table)):
-        if label_array[i] != 0 and label_array[i] != 4:
-            continue
-        #Deal with the conv layer
-        conv_name = model_name_split[int(np.floor(count))]
-        input_channels = extrac_oc_from_conv(pre_conv)
-        pre_conv = conv_name
-        if label_array[i] == 4:
-            count += 1
-            continue
-        output_channels = extrac_oc_from_conv(conv_name)
-        kernel, stride, pad = extrac_others_from_conv(conv_name)
 
-        # print("count {} - conv name is: {}, Image_Dim = {}, IC = {}, OC = {}".format(count, conv_name, img_dimension, input_channels, output_channels))
+    if operator_name == "conv":
+        model_name_split = model_name.split("_mlp")[0].split("_")
+        count = 1
+        pre_conv = "3p"
+        img_dimension = orig_img_dim
+        for i in range(len(seg_table)):
+            if label_array[i] != 0 and label_array[i] != 4:
+                continue
+            #Deal with the conv layer
+            conv_name = model_name_split[int(np.floor(count))]
+            input_channels = extrac_oc_from_conv(pre_conv)
+            pre_conv = conv_name
+            if label_array[i] == 4:
+                count += 1
+                continue
+            output_channels = extrac_oc_from_conv(conv_name)
+            kernel, stride, pad = extrac_others_from_conv(conv_name)
+
+            # print("count {} - conv name is: {}, Image_Dim = {}, IC = {}, OC = {}".format(count, conv_name, img_dimension, input_channels, output_channels))
 
 
-        # If current layer is a reslayer, then next one is still this layer.
-        if "res" in model_name_split[int(np.floor(count))]:
-            count += 0.5
-        # If current layer is a normal conv layer, count += 1
-        else:
-            count += 1
+            # If current layer is a reslayer, then next one is still this layer.
+            if "res" in model_name_split[int(np.floor(count))]:
+                count += 0.5
+            # If current layer is a normal conv layer, count += 1
+            else:
+                count += 1
+            
+            if train_inputs.shape[2] == 1:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+
+            elif train_inputs.shape[2] == 5:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                panda_dict['FeatureMemRWratio'].append(train_inputs[0, int(seg_table[i]), 3])
+                panda_dict['FeatureMemRAWratio'].append(train_inputs[0, int(seg_table[i]), 4])
+            elif train_inputs.shape[2] == 11:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                panda_dict['FeatureL1Util'].append(train_inputs[0, int(seg_table[i]), 3])
+                panda_dict['FeatureL1Hit'].append(train_inputs[0, int(seg_table[i]), 4])
+                panda_dict['FeatureL1Read'].append(train_inputs[0, int(seg_table[i]), 5])
+                panda_dict['FeatureL1Write'].append(train_inputs[0, int(seg_table[i]), 6])
+                panda_dict['FeatureL2Hit'].append(train_inputs[0, int(seg_table[i]), 7])
+                panda_dict['FeatureL2Util'].append(train_inputs[0, int(seg_table[i]), 8])
+                panda_dict['FeatureL2Read'].append(train_inputs[0, int(seg_table[i]), 9])
+                panda_dict['FeatureL2Write'].append(train_inputs[0, int(seg_table[i]), 10])
+            panda_dict['FeatureImageDim'].append(img_dimension)
+            panda_dict['TargetIC'].append(input_channels)
+            panda_dict['TargetOC'].append(output_channels)
+            panda_dict['TargetKernel'].append(kernel)
+            panda_dict['TargetStride'].append(stride)
+            panda_dict['TargetPad'].append(pad)
+
+            img_dimension = change_img_dim(conv_name, img_dimension)
+    
+    elif operator_name == "fc":
+        model_name_split = model_name.split("_mlp")[0].split("_")
+        img_dimension = orig_img_dim
+        count = 1
+        for i in range(len(seg_table)):
+            if label_array[i] != 0 and label_array[i] != 4:
+                continue
+            #Deal with the conv layer
+            
+            conv_name = model_name_split[int(np.floor(count))]
+            if label_array[i] == 4:
+                count += 1
+                continue
+            output_channels = extrac_oc_from_conv(conv_name)
+            if "res" in model_name_split[int(np.floor(count))]:
+                count += 0.5
+            # If current layer is a normal conv layer, count += 1
+            else:
+                count += 1
+            
+            img_dimension = change_img_dim(conv_name, img_dimension)
+            
+        model_name_split = model_name.split("_mlp_")[1].split("_bn")[0].split("_")
+        model_name_split.append(f'{n_class}')
+        feature_dim = img_dimension ** 2 * output_channels
         
-        if train_inputs.shape[2] == 1:
-            panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+        count = 0
+        for i in range(len(seg_table)):
+            if label_array[i] != 1:
+                continue
 
-        elif train_inputs.shape[2] == 5:
-            panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
-            panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
-            panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
-            panda_dict['FeatureMemRWratio'].append(train_inputs[0, int(seg_table[i]), 3])
-            panda_dict['FeatureMemRAWratio'].append(train_inputs[0, int(seg_table[i]), 4])
-        elif train_inputs.shape[2] == 11:
-            panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
-            panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
-            panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
-            panda_dict['FeatureL1Util'].append(train_inputs[0, int(seg_table[i]), 3])
-            panda_dict['FeatureL1Hit'].append(train_inputs[0, int(seg_table[i]), 4])
-            panda_dict['FeatureL1Read'].append(train_inputs[0, int(seg_table[i]), 5])
-            panda_dict['FeatureL1Write'].append(train_inputs[0, int(seg_table[i]), 6])
-            panda_dict['FeatureL2Hit'].append(train_inputs[0, int(seg_table[i]), 7])
-            panda_dict['FeatureL2Util'].append(train_inputs[0, int(seg_table[i]), 8])
-            panda_dict['FeatureL2Read'].append(train_inputs[0, int(seg_table[i]), 9])
-            panda_dict['FeatureL2Write'].append(train_inputs[0, int(seg_table[i]), 10])
-        panda_dict['FeatureImageDim'].append(img_dimension)
-        panda_dict['TargetIC'].append(input_channels)
-        panda_dict['TargetOC'].append(output_channels)
-        panda_dict['TargetKernel'].append(kernel)
-        panda_dict['TargetStride'].append(stride)
-        panda_dict['TargetPad'].append(pad)
+            if train_inputs.shape[2] == 1:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
 
-        img_dimension = change_img_dim(conv_name, img_dimension)
+            elif train_inputs.shape[2] == 5:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                panda_dict['FeatureMemRWratio'].append(train_inputs[0, int(seg_table[i]), 3])
+                panda_dict['FeatureMemRAWratio'].append(train_inputs[0, int(seg_table[i]), 4])
+            elif train_inputs.shape[2] == 11:
+                panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                panda_dict['FeatureL1Util'].append(train_inputs[0, int(seg_table[i]), 3])
+                panda_dict['FeatureL1Hit'].append(train_inputs[0, int(seg_table[i]), 4])
+                panda_dict['FeatureL1Read'].append(train_inputs[0, int(seg_table[i]), 5])
+                panda_dict['FeatureL1Write'].append(train_inputs[0, int(seg_table[i]), 6])
+                panda_dict['FeatureL2Hit'].append(train_inputs[0, int(seg_table[i]), 7])
+                panda_dict['FeatureL2Util'].append(train_inputs[0, int(seg_table[i]), 8])
+                panda_dict['FeatureL2Read'].append(train_inputs[0, int(seg_table[i]), 9])
+                panda_dict['FeatureL2Write'].append(train_inputs[0, int(seg_table[i]), 10])
+
+            panda_dict['FeatureDim'].append(feature_dim)
+            panda_dict['TargetDim'].append(int(model_name_split[count]))
+            feature_dim = int(model_name_split[count])
+            count += 1
+    
+    elif operator_name == "depth":
+        model_name_split = model_name.split("_mlp")[0].split("_")
+        count = 1
+        pre_conv = "3p"
+        img_dimension = orig_img_dim
+        for i in range(len(seg_table)):
+            if label_array[i] != 0 and label_array[i] != 4:
+                continue
+            #Deal with the conv layer
+            conv_name = model_name_split[int(np.floor(count))]
+            input_channels = extrac_oc_from_conv(pre_conv)
+            pre_conv = conv_name
+            # if label_array[i] == 4:
+            output_channels = extrac_oc_from_conv(conv_name)
+            kernel, stride, pad = extrac_others_from_conv(conv_name)
+
+            # print("count {} - conv name is: {}, Image_Dim = {}, IC = {}, OC = {}".format(count, conv_name, img_dimension, input_channels, output_channels))
+
+
+            # If current layer is a reslayer, then next one is still this layer.
+            if "res" in model_name_split[int(np.floor(count))]:
+                count += 0.5
+            # If current layer is a normal conv layer, count += 1
+            else:
+                count += 1
+            
+            if label_array[i] == 4:
+                if train_inputs.shape[2] == 1:
+                    panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+
+                elif train_inputs.shape[2] == 5:
+                    panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                    panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                    panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                    panda_dict['FeatureMemRWratio'].append(train_inputs[0, int(seg_table[i]), 3])
+                    panda_dict['FeatureMemRAWratio'].append(train_inputs[0, int(seg_table[i]), 4])
+                elif train_inputs.shape[2] == 11:
+                    panda_dict['FeatureCycles'].append(train_inputs[0, int(seg_table[i]), 0])
+                    panda_dict['FeatureMemRead'].append(train_inputs[0, int(seg_table[i]), 1])
+                    panda_dict['FeatureMemWrite'].append(train_inputs[0, int(seg_table[i]), 2])
+                    panda_dict['FeatureL1Util'].append(train_inputs[0, int(seg_table[i]), 3])
+                    panda_dict['FeatureL1Hit'].append(train_inputs[0, int(seg_table[i]), 4])
+                    panda_dict['FeatureL1Read'].append(train_inputs[0, int(seg_table[i]), 5])
+                    panda_dict['FeatureL1Write'].append(train_inputs[0, int(seg_table[i]), 6])
+                    panda_dict['FeatureL2Hit'].append(train_inputs[0, int(seg_table[i]), 7])
+                    panda_dict['FeatureL2Util'].append(train_inputs[0, int(seg_table[i]), 8])
+                    panda_dict['FeatureL2Read'].append(train_inputs[0, int(seg_table[i]), 9])
+                    panda_dict['FeatureL2Write'].append(train_inputs[0, int(seg_table[i]), 10])
+                panda_dict['FeatureImageDim'].append(img_dimension)
+                panda_dict['TargetIC'].append(input_channels)
+                panda_dict['TargetOC'].append(output_channels)
+                panda_dict['TargetStride'].append(stride)
+
+            else:
+                img_dimension = change_img_dim(conv_name, img_dimension)
+    
+    
     return panda_dict
 
 
-def collect_feature_target(dir, reduced = True, time_only = False, include_name = "batch", prefix_output = "train_data", orig_img_dim = 32):
+def collect_feature_target(dir, operator_name = 'conv', reduced = True, time_only = False, include_name = "complex_batch_1_nclass_10_infeat_3072", prefix_output = "train_data", orig_img_dim = 32):
     train_inputs_list = []
     train_targets_sparse_list = []
     train_seq_len_list = []
@@ -350,7 +470,7 @@ def collect_feature_target(dir, reduced = True, time_only = False, include_name 
     original_list = []
     index = 0
     panda_dict = {}
-
+    n_class = int(include_name.split("nclass_")[-1].split("_infeat")[0])
     if reduced:
         if time_only:
             panda_dict['FeatureCycles'] = []
@@ -372,22 +492,34 @@ def collect_feature_target(dir, reduced = True, time_only = False, include_name 
         panda_dict['FeatureL2Util'] = []
         panda_dict['FeatureL2Read'] = []
         panda_dict['FeatureL2Write'] = []
-    panda_dict['FeatureImageDim'] = []
-    panda_dict['TargetIC'] = []
-    panda_dict['TargetOC'] = []
-    panda_dict['TargetKernel'] = []
-    panda_dict['TargetStride'] = []
-    panda_dict['TargetPad'] = []
+
+    if operator_name == "conv":
+        panda_dict['FeatureImageDim'] = []
+        panda_dict['TargetIC'] = []
+        panda_dict['TargetOC'] = []
+        panda_dict['TargetKernel'] = []
+        panda_dict['TargetStride'] = []
+        panda_dict['TargetPad'] = []
+    elif operator_name == "fc":
+        panda_dict['FeatureDim'] = []
+        panda_dict['TargetDim'] = []
+    elif operator_name == "depth":
+        panda_dict['FeatureImageDim'] = []
+        panda_dict['TargetIC'] = []
+        panda_dict['TargetOC'] = []
+        panda_dict['TargetStride'] = []
     for filename in os.listdir(dir):
         if include_name in filename:
             file_prefix = filename.split('.')[0]
             file_type = filename.split('.')[1]
             if file_type == 'csv':
+                print(filename)
                 seg_tuble = trace_csv_seg(dir + filename)
                 if seg_tuble is None:
                     continue
                 else:
-                    seg_table, train_targets = seg_tuble
+                    seg_table, _ = seg_tuble
+                    print(seg_table)
                     if seg_table is None:
                         continue
                 if reduced:
@@ -396,16 +528,15 @@ def collect_feature_target(dir, reduced = True, time_only = False, include_name 
                         train_inputs = train_inputs[:,:,0].reshape(1, train_inputs.shape[1], 1)
                 else:
                     train_inputs, _ = trace_csv_numpy(dir + filename)
-
-                panda_dict = panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_img_dim)
+                panda_dict = panda_add_entry(dir, seg_table, train_inputs, file_prefix, panda_dict, orig_img_dim, operator_name, n_class)
     df = pd.DataFrame(panda_dict)
     if reduced:
         if time_only:
-            df.to_csv('../seq_predictor/obfuscator/dataset/timeonly_conv_classification.csv', index=False) 
+            df.to_csv(f'../seq_predictor/obfuscator/dataset/timeonly_{operator_name}_classification.csv', index=False) 
         else:
-            df.to_csv('../seq_predictor/obfuscator/dataset/reduced_conv_classification.csv', index=False) 
+            df.to_csv(f'../seq_predictor/obfuscator/dataset/reduced_{operator_name}_classification.csv', index=False) 
     else:
-        df.to_csv('../seq_predictor/obfuscator/dataset/full_conv_classification.csv', index=False) 
+        df.to_csv(f'../seq_predictor/obfuscator/dataset/full_{operator_name}_classification.csv', index=False) 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -415,8 +546,14 @@ if __name__ == '__main__':
     parser.add_argument("--orig_img_dim", type=int, default=224, help='original image dimension')
     args = parser.parse_args()
     if args.dataset_type == "reduced":
-        collect_feature_target('trace/', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'fc', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'depth', reduced = True, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
     elif args.dataset_type == "full":
-        collect_feature_target('trace/', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'fc', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'depth', reduced = False, time_only = False, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
     elif args.dataset_type == "time_only":
-        collect_feature_target('trace/', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'conv', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'fc', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)
+        collect_feature_target('trace/', 'depth', reduced = True, time_only = True, include_name = args.selection, prefix_output = args.prefix_output, orig_img_dim = args.orig_img_dim)

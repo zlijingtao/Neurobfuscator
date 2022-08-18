@@ -27,8 +27,8 @@ def get_pipeline(n_estimators = 50, min_samples_split = 10):
     return Pipeline(steps)
 
 def main(args):
-    train_path = "../seq_predictor/obfuscator/dataset/{}_conv_classification.csv".format(args.dataset_type)
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_{}.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type, args.target)
+    train_path = "../seq_predictor/obfuscator/dataset/{}_{}_classification.csv".format(args.dataset_type, args.operator_name)
+    model_path = "./saved_models/{}_RF_{}_minsplit_{}_{}_{}.pickle".format(args.operator_name, args.n_estimators, args.min_samples_split, args.dataset_type, args.target)
 
     print("Reading in the training data")
     train = pd.read_csv(train_path)
@@ -39,11 +39,25 @@ def main(args):
         y = train[args.target]
     except:
         raise("Target does not exist!")
-    try:
-        X = train.drop(columns=['TargetIC', 'TargetOC', 'TargetKernel', 'TargetStride', 'TargetPad'])
-        # X = X.drop(columns=['FeatureImageDim'])
-    except:
-        raise("Some Target do not exist, please check the integrity of training file!")
+    
+    if args.operator_name == "conv":
+        try:
+            X = train.drop(columns=['TargetIC', 'TargetOC', 'TargetKernel', 'TargetStride', 'TargetPad'])
+            # X = X.drop(columns=['FeatureImageDim'])
+        except:
+            raise("Some Target do not exist, please check the integrity of training file!")
+    elif args.operator_name == "fc":
+        try:
+            X = train.drop(columns=['TargetDim'])
+            # X = X.drop(columns=['FeatureDim'])
+        except:
+            raise("Some Target do not exist, please check the integrity of training file!")
+    elif args.operator_name == "depth":
+        try:
+            X = train.drop(columns=['TargetIC', 'TargetOC'])
+            # X = X.drop(columns=['FeatureImageDim'])
+        except:
+            raise("Some Target do not exist, please check the integrity of training file!")
 
     '''Train Test Split'''
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
@@ -80,7 +94,7 @@ def main(args):
         param_grid = {'classify__n_estimators': [60, 80, 100, 120, 140]}
         search = GridSearchCV(classifier, param_grid, scoring = scoring, cv=5, refit = 'mean_absolute_error').fit(X, y)
         print(search.best_params_)
-        with open('./saved_models/RF_{}_minsplit_{}_{}_{}_grid_search.pickle'.format(args.n_estimators, args.min_samples_split, args.dataset_type, args.target), 'wb') as handle:
+        with open('./saved_models/{}_RF_{}_minsplit_{}_{}_{}_grid_search.pickle'.format(args.operator_name, args.n_estimators, args.min_samples_split, args.dataset_type, args.target), 'wb') as handle:
             pickle.dump(search, handle, protocol=pickle.HIGHEST_PROTOCOL)
     else:
         '''Option-3: Load existing model'''
@@ -98,7 +112,8 @@ def main(args):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_type", type=str, default="timeonly", help='Pick dataset you want to generate', choices=("reduced", "full", "timeonly"))
-    parser.add_argument("--target", type=str, default="TargetIC", choices = ['TargetIC', 'TargetOC', 'TargetKernel', 'TargetStride', 'TargetPad'], help='path to save the model')
+    parser.add_argument("--target", type=str, default="TargetIC", choices = ['TargetIC', 'TargetOC', 'TargetKernel', 'TargetStride', 'TargetPad', 'TargetDim'], help='which dim to predict')
+    parser.add_argument("--operator_name", type=str, default="conv", choices = ['conv', 'fc', 'depth'], help='which operator to predict')
     parser.add_argument("--option", type=int, default=1, choices = [0, 1, 2, 3], help='Training Options: 0: train with 100& data, 1: standard train/test, 2: grid search for hyper-params, 3: load and test')
     parser.add_argument("--n_estimators", type=int, default=50, help='Number of Trees for Random Forest')
     parser.add_argument("--min_samples_split", type=int, default=30, help='Minimum Number of Splitting Features for Each Split')

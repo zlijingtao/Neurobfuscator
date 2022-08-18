@@ -4,6 +4,8 @@ cd ../dim_predictor
 
 algorithm=rf
 dataset_type_list=("full" "reduced" "timeonly")
+
+operator_name=conv
 target_list=("TargetIC" "TargetOC" "TargetKernel" "TargetStride" "TargetPad")
 
 #Use option 3 to Test the model on validation set
@@ -19,11 +21,61 @@ for val2 in ${dataset_type_list[*]}; do
     target=$val3
     if [[ ${algorithm} == "rf" ]]; then
         python dim_train.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
-        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split}
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
     fi
     if [[ ${algorithm} == "xgb" ]]; then
         python dim_train_xgb.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
-        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split}
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
+    fi
+    done
+done
+
+operator_name=fc
+target_list=("TargetDim")
+
+#Use option 3 to Test the model on validation set
+# option=3
+
+#Use option 0 to Train the model on Training set
+option=0
+n_estimators=100
+min_samples_split=30
+for val2 in ${dataset_type_list[*]}; do
+    for val3 in ${target_list[*]}; do
+    dataset_type=$val2
+    target=$val3
+    if [[ ${algorithm} == "rf" ]]; then
+        python dim_train.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
+    fi
+    if [[ ${algorithm} == "xgb" ]]; then
+        python dim_train_xgb.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
+    fi
+    done
+done
+
+operator_name=depth
+target_list=("TargetIC" "TargetOC")
+
+#Use option 3 to Test the model on validation set
+# option=3
+
+#Use option 0 to Train the model on Training set
+option=0
+n_estimators=100
+min_samples_split=30
+for val2 in ${dataset_type_list[*]}; do
+    for val3 in ${target_list[*]}; do
+    dataset_type=$val2
+    target=$val3
+    if [[ ${algorithm} == "rf" ]]; then
+        python dim_train.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
+    fi
+    if [[ ${algorithm} == "xgb" ]]; then
+        python dim_train_xgb.py --dataset_type ${dataset_type} --target ${target} --option ${option} \
+        --n_estimators ${n_estimators} --min_samples_split ${min_samples_split} --operator_name ${operator_name}
     fi
     done
 done

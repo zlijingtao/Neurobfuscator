@@ -195,7 +195,7 @@ def conv_list_gen(size_conv, filter_conv, stride_conv, padding_conv, input_chann
 def seq_from_string(model_name):
     label_sequence = []
     layer_list = model_name.split("_")
-
+    start = 0
     for i in range(len(layer_list)):
         if "cnn" in layer_list[i]:
             start = 1
@@ -265,7 +265,7 @@ def main():
 
     model_name = model_name_from_seed(args.random_seed)
     # for test only
-    # model_name = 'cnn_128p3p1p1p1_16p3p2p1p0_depth128p1_256p3p1p1p0_64p3p2p1p1_res64p1_64p3p1p1p0_512p3p1p1p0_16p3p1p1p0_16p3p1p1p0_bn1_mlp_256_16_bn0'
+    model_name = 'mlp_512_256_128_bn1'
 
     logging.basicConfig(level=logging.DEBUG, filename=dir_name + "trace_gen.log", filemode="a+",
                         format="%(asctime)-15s %(levelname)-8s %(message)s")

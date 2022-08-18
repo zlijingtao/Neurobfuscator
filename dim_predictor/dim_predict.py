@@ -5,23 +5,34 @@ import pickle
 import pandas as pd
 
 class Dim_predictor(object):
-    def __init__(self, path_to_model = "./saved_models", n_estimators = 100, min_samples_split = 30, dataset_type = "full"):
+    def __init__(self, path_to_model = "./saved_models", n_estimators = 100, min_samples_split = 30, dataset_type = "full", operator_name = "conv"):
         self.dataset_type = dataset_type
+        self.operator_name = operator_name
         if self.dataset_type != "all":
-            model_path = "{}/RF_{}_minsplit_{}_{}_TargetIC.pickle".format(path_to_model, n_estimators, min_samples_split, dataset_type)
-            self.IC_classifier = pickle.load(open(model_path, "rb"))
+            if operator_name == "conv":
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetIC.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.IC_classifier = pickle.load(open(model_path, "rb"))
 
-            model_path = "{}/RF_{}_minsplit_{}_{}_TargetOC.pickle".format(path_to_model, n_estimators, min_samples_split, dataset_type)
-            self.OC_classifier = pickle.load(open(model_path, "rb"))
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetOC.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.OC_classifier = pickle.load(open(model_path, "rb"))
 
-            model_path = "{}/RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(path_to_model, n_estimators, min_samples_split, dataset_type)
-            self.Kernel_classifier = pickle.load(open(model_path, "rb"))
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.Kernel_classifier = pickle.load(open(model_path, "rb"))
 
-            model_path = "{}/RF_{}_minsplit_{}_{}_TargetStride.pickle".format(path_to_model, n_estimators, min_samples_split, dataset_type)
-            self.Stride_classifier = pickle.load(open(model_path, "rb"))
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetStride.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.Stride_classifier = pickle.load(open(model_path, "rb"))
 
-            model_path = "{}/RF_{}_minsplit_{}_{}_TargetPad.pickle".format(path_to_model, n_estimators, min_samples_split, dataset_type)
-            self.Pad_classifier = pickle.load(open(model_path, "rb"))
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetPad.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.Pad_classifier = pickle.load(open(model_path, "rb"))
+            elif operator_name == "fc":
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetDim.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.IC_classifier = pickle.load(open(model_path, "rb"))
+            elif operator_name == "depth":
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetIC.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.IC_classifier = pickle.load(open(model_path, "rb"))
+
+                model_path = "{}/{}_RF_{}_minsplit_{}_{}_TargetOC.pickle".format(operator_name, path_to_model, n_estimators, min_samples_split, dataset_type)
+                self.OC_classifier = pickle.load(open(model_path, "rb"))
         else:
             type_list = ["timeonly", "reduced", "full"]
             self.IC_classifier = []
@@ -29,22 +40,33 @@ class Dim_predictor(object):
             self.Kernel_classifier = []
             self.Stride_classifier = []
             self.Pad_classifier = []
+            if operator_name == "conv":
+                for dtype in type_list:
+                    model_path = "{}/conv_RF_{}_minsplit_{}_{}_TargetIC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.IC_classifier.append(pickle.load(open(model_path, "rb")))
 
-            for dtype in type_list:
-                model_path = "{}/RF_{}_minsplit_{}_{}_TargetIC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
-                self.IC_classifier.append(pickle.load(open(model_path, "rb")))
+                    model_path = "{}/conv_RF_{}_minsplit_{}_{}_TargetOC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.OC_classifier.append(pickle.load(open(model_path, "rb")))
 
-                model_path = "{}/RF_{}_minsplit_{}_{}_TargetOC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
-                self.OC_classifier.append(pickle.load(open(model_path, "rb")))
+                    model_path = "{}/conv_RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.Kernel_classifier.append(pickle.load(open(model_path, "rb")))
 
-                model_path = "{}/RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
-                self.Kernel_classifier.append(pickle.load(open(model_path, "rb")))
+                    model_path = "{}/conv_RF_{}_minsplit_{}_{}_TargetStride.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.Stride_classifier.append(pickle.load(open(model_path, "rb")))
 
-                model_path = "{}/RF_{}_minsplit_{}_{}_TargetStride.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
-                self.Stride_classifier.append(pickle.load(open(model_path, "rb")))
+                    model_path = "{}/conv_RF_{}_minsplit_{}_{}_TargetPad.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.Pad_classifier.append(pickle.load(open(model_path, "rb")))
+            elif operator_name == "fc":
+                for dtype in type_list:
+                    model_path = "{}/fc_RF_{}_minsplit_{}_{}_TargetDim.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.IC_classifier.append(pickle.load(open(model_path, "rb")))
+            elif operator_name == "depth":
+                for dtype in type_list:
+                    model_path = "{}/depth_RF_{}_minsplit_{}_{}_TargetIC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.IC_classifier.append(pickle.load(open(model_path, "rb")))
 
-                model_path = "{}/RF_{}_minsplit_{}_{}_TargetPad.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
-                self.Pad_classifier.append(pickle.load(open(model_path, "rb")))
+                    model_path = "{}/depth_RF_{}_minsplit_{}_{}_TargetOC.pickle".format(path_to_model, n_estimators, min_samples_split, dtype)
+                    self.OC_classifier.append(pickle.load(open(model_path, "rb")))
     def predict(self, input):
         if self.dataset_type == "timeonly":
             if len(input) != 2:
@@ -60,13 +82,20 @@ class Dim_predictor(object):
                 raise Exception("Input shape (2D-list) does not match: {}, expect 3!".format(len(input)))
         else:
             raise Exception("Dataset type does not exist!")
+        
         if self.dataset_type != "all":
             X_sample = np.array(input).reshape(1, -1)
-            IC = self.IC_classifier.predict(X_sample)[0]
-            OC = self.OC_classifier.predict(X_sample)[0]
-            Kernel = self.Kernel_classifier.predict(X_sample)[0]
-            Stride = self.Stride_classifier.predict(X_sample)[0]
-            Pad = self.Pad_classifier.predict(X_sample)[0]
+            if self.operator_name == "conv":
+                IC = self.IC_classifier.predict(X_sample)[0]
+                OC = self.OC_classifier.predict(X_sample)[0]
+                Kernel = self.Kernel_classifier.predict(X_sample)[0]
+                Stride = self.Stride_classifier.predict(X_sample)[0]
+                Pad = self.Pad_classifier.predict(X_sample)[0]
+            elif self.operator_name == "fc":
+                IC = self.IC_classifier.predict(X_sample)[0]
+            elif self.operator_name == "depth":
+                IC = self.IC_classifier.predict(X_sample)[0]
+                OC = self.OC_classifier.predict(X_sample)[0]
         else:
             IC_list = []
             OC_list = []
@@ -77,34 +106,47 @@ class Dim_predictor(object):
             X_sample.append(np.array(input[0]).reshape(1, -1))
             X_sample.append(np.array(input[1]).reshape(1, -1))
             X_sample.append(np.array(input[2]).reshape(1, -1))
-            for i in range(3):
-                IC_list.append(self.IC_classifier[i].predict(X_sample[i])[0])
-                OC_list.append(self.OC_classifier[i].predict(X_sample[i])[0])
-                Kernel_list.append(self.Kernel_classifier[i].predict(X_sample[i])[0])
-                Stride_list.append(self.Stride_classifier[i].predict(X_sample[i])[0])
-                Pad_list.append(self.Pad_classifier[i].predict(X_sample[i])[0])
-            IC = sum(IC_list)/len(IC_list)
-            OC = sum(OC_list)/len(OC_list)
-            Kernel = sum(Kernel_list)/len(Kernel_list)
-            Stride = sum(Stride_list)/len(Stride_list)
-            Pad = sum(Pad_list)/len(Pad_list)
-        Prediction = "Prediction is:\n Conv2D({}, {}, kernel_size = {}, stride = {}, padding = {})".format(IC, OC, Kernel, Stride, Pad)
+            if self.operator_name == "conv":
+                for i in range(3):
+                    IC_list.append(self.IC_classifier[i].predict(X_sample[i])[0])
+                    OC_list.append(self.OC_classifier[i].predict(X_sample[i])[0])
+                    Kernel_list.append(self.Kernel_classifier[i].predict(X_sample[i])[0])
+                    Stride_list.append(self.Stride_classifier[i].predict(X_sample[i])[0])
+                    Pad_list.append(self.Pad_classifier[i].predict(X_sample[i])[0])
+                IC = sum(IC_list)/len(IC_list)
+                OC = sum(OC_list)/len(OC_list)
+                Kernel = sum(Kernel_list)/len(Kernel_list)
+                Stride = sum(Stride_list)/len(Stride_list)
+                Pad = sum(Pad_list)/len(Pad_list)
+                Prediction = "For operator conv - Prediction is:\n Conv2D({}, {}, kernel_size = {}, stride = {}, padding = {})".format(IC, OC, Kernel, Stride, Pad)
+            elif self.operator_name == "fc":
+                for i in range(3):
+                    IC_list.append(self.IC_classifier[i].predict(X_sample[i])[0])
+                IC = sum(IC_list)/len(IC_list)
+                Prediction = "For operator fc - Prediction is:\n Linear({}, )".format(IC)
+            elif self.operator_name == "depth":
+                for i in range(3):
+                    IC_list.append(self.IC_classifier[i].predict(X_sample[i])[0])
+                    OC_list.append(self.OC_classifier[i].predict(X_sample[i])[0])
+                IC = sum(IC_list)/len(IC_list)
+                OC = sum(OC_list)/len(OC_list)
+                Prediction = "For operator depth - Prediction is:\n DepthwiseConv2D({}, {}, kernel_size = 3, stride = 1, padding = 1)".format(IC, OC)
         return Prediction
 
 def main(args):
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_TargetIC.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
+    model_path = "./saved_models/conv_RF_{}_minsplit_{}_{}_TargetIC.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
     IC_classifier = pickle.load(open(model_path, "rb"))
 
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_TargetOC.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
+    model_path = "./saved_models/conv_RF_{}_minsplit_{}_{}_TargetOC.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
     OC_classifier = pickle.load(open(model_path, "rb"))
 
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
+    model_path = "./saved_models/conv_RF_{}_minsplit_{}_{}_TargetKernel.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
     Kernel_classifier = pickle.load(open(model_path, "rb"))
 
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_TargetStride.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
+    model_path = "./saved_models/conv_RF_{}_minsplit_{}_{}_TargetStride.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
     Stride_classifier = pickle.load(open(model_path, "rb"))
 
-    model_path = "./saved_models/RF_{}_minsplit_{}_{}_TargetPad.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
+    model_path = "./saved_models/conv_RF_{}_minsplit_{}_{}_TargetPad.pickle".format(args.n_estimators, args.min_samples_split, args.dataset_type)
     Pad_classifier = pickle.load(open(model_path, "rb"))
 
     X_sample = np.array([556216.0,13816.0,58.62,77.15,22199725.0,200704.0,89.71,25.04,5237356.0,162306.0,33842932.0,112]).reshape(1, -1)
@@ -120,6 +162,7 @@ def main(args):
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_type", type=str, default="timeonly", help='Pick dataset you want to generate', choices=("reduced", "full", "timeonly"))
+    # parser.add_argument("--operator_name", type=str, default="conv", choices = ['conv', 'fc', 'depth'], help='which operator to predict')
     parser.add_argument("--n_estimators", type=int, default=50, help='Number of Trees for Random Forest')
     parser.add_argument("--min_samples_split", type=int, default=30, help='Minimum Number of Splitting Features for Each Split')
     args = parser.parse_args()

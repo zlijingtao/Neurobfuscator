@@ -29,7 +29,7 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
 
 def reward_function(current_param, clean_param):
-    clean_param = np.array([64, 128])
+    # clean_param = np.array([64, 128])
     return np.sum(np.abs(current_param - clean_param)/ clean_param)
 
 def fitness_function(avg_DER, cycle, clean_cycle, budget = 0.02):
@@ -41,10 +41,16 @@ def fitness_function(avg_DER, cycle, clean_cycle, budget = 0.02):
         fitness = avg_DER * (1/ offset)
     return fitness
 
-def extract_param_from_str(param_str):
+def extract_param_from_str(param_str, operator_name = "conv"):
     param = []
-    param.append(round(float(param_str.split(", ")[0].split("Conv2D(")[1])))
-    param.append(round(float(param_str.split(", ")[1])))
+    if operator_name == "conv":
+        param.append(round(float(param_str.split(", ")[0].split("Conv2D(")[1])))
+        param.append(round(float(param_str.split(", ")[1])))
+    elif operator_name == "fc":
+        param.append(round(float(param_str.split(", ")[0].split("Linear(")[-1])))
+    elif operator_name == "depth":
+        param.append(round(float(param_str.split(", ")[0].split("DepthwiseConv2D(")[1])))
+        param.append(round(float(param_str.split(", ")[1])))
     return np.asarray(param)
 
 def csv_to_time_overhead(csv_file):
@@ -170,7 +176,7 @@ def apply_noise(dict, sigma, forbid_List):
 
 
 class dim_obf_env(object):
-    def __init__(self, batch_size, input_features, model_id, out_name, obf_logger):
+    def __init__(self, batch_size, input_features, model_id, out_name, obf_logger, selected_entry = None):
         assert torch.cuda.is_available()
         self.cuda_device = torch.device("cuda")  # device object representing GPU
         self.batch_size = batch_size
@@ -188,16 +194,38 @@ class dim_obf_env(object):
         #print out the model to check the range of obfuscation
         model_log_file = './obf_tmp_file/model_info.log'
         logger = setup_logger('first_logger', model_log_file)
-        if self.input_features == 3072:
-            logger.info(summary(model, (3,32,32)))
-            self.selected_entry = 3 #Very Important:
-        elif self.input_features == 150528:
-            logger.info(summary(model, (3,224,224)))
-            self.selected_entry = 10 #Very Important:
-        elif self.input_features == 784:
-            logger.info(summary(model, (1,28,28)))
-            self.selected_entry = 1
 
+        #load its sequence (use the ground-truth one, we have no segmentable here.)
+        model_npy_name = np.load("./model_file/" + self.model_name + ".npy")
+        print(model_npy_name)
+
+        #use the n-th entry of trace file in predictor for obfuscation objective
+        self.selected_entry = selected_entry
+        operator_name = layer_int_to_name_map[model_npy_name[1]] #TODO: will be dependent on selected entry.
+        if not self.selected_entry:
+            if self.input_features == 3072:
+                operator_name = layer_int_to_name_map[model_npy_name[1]]
+                if operator_name == "conv" or operator_name == "depth":
+                    logger.info(summary(model, (3,32,32)))
+                elif operator_name == "fc":
+                    logger.info(summary(model, (3072,)))
+                self.selected_entry = 3 #Very Important:
+                
+            elif self.input_features == 150528:
+                operator_name = layer_int_to_name_map[model_npy_name[1]]
+                if operator_name == "conv" or operator_name == "depth":
+                    logger.info(summary(model, (3,224,224)))
+                self.selected_entry = 10 #Very Important:
+
+            elif self.input_features == 784:
+                operator_name = layer_int_to_name_map[model_npy_name[1]]
+                if operator_name == "conv" or operator_name == "depth":
+                    logger.info(summary(model, (1,28,28)))
+                elif operator_name == "fc":
+                    logger.info(summary(model, (784,)))
+                self.selected_entry = 1
+                
+        self.operator_name  = operator_name
         #Get the length of the model, initialize three lists specifying the obfuscation
         self.modify_list, self.decompo_list, self.kerneladd_list = identify_model(model_log_file)
 
@@ -230,7 +258,10 @@ class dim_obf_env(object):
         self.obf_dict = {"widen_list": self.widen_list, "dummy_list": self.dummy_list,
                     "kerneladd_list": self.kerneladd_list, "prune_list": self.prune_list}
         self.cycles = 0
-        self.clean_param, self.clean_cycles = self.get_3_avg_param(1, 3, 3)
+        if operator_name == "conv" or operator_name == "depth":
+            self.clean_param, self.clean_cycles = self.get_3_avg_param(1, 3, 3)
+        elif operator_name == "fc":
+            self.clean_param, self.clean_cycles = self.get_3_avg_param(1, 0, 3)
     def get_obf_dict(self):
         return self.obf_dict
 
@@ -263,45 +294,46 @@ class dim_obf_env(object):
         '''Calculate the total Cycle cost'''
         sample_file = "./env_file/lib_model_{}_obf_{}.csv".format(self.model_id, self.out_name)
 
-        try:
-            df = pd.read_csv(sample_file, skiprows=2)
-            trace_df = df[['ID', 'Metric Name', 'Metric Value']]
-            reduced_trace_array = np.zeros((1, trace_df['ID'].nunique(), 5))
-            full_trace_array = np.zeros((1, trace_df['ID'].nunique(), trace_df['Metric Name'].nunique()))
+        # try:
+        df = pd.read_csv(sample_file, skiprows=2)
+        trace_df = df[['ID', 'Metric Name', 'Metric Value']]
+        reduced_trace_array = np.zeros((1, trace_df['ID'].nunique(), 5))
+        full_trace_array = np.zeros((1, trace_df['ID'].nunique(), trace_df['Metric Name'].nunique()))
 
-            old_row_id = -1
-            count = 0
-            for index, row in trace_df.iterrows():
-                if row['ID'] == old_row_id:
-                    count += 1
+        old_row_id = -1
+        count = 0
+        for index, row in trace_df.iterrows():
+            if row['ID'] == old_row_id:
+                count += 1
+            else:
+                old_row_id += 1
+                count = 0
+            full_trace_array[0, old_row_id, count] = row['Metric Value']
+            if row['Metric Name'] == 'Cycles':
+                reduced_trace_array[0, old_row_id, 0] = row['Metric Value']
+            elif row['Metric Name'] == 'Mem Read':
+                reduced_trace_array[0, old_row_id, 1] = row['Metric Value']
+            elif row['Metric Name'] == 'Mem Write':
+                reduced_trace_array[0, old_row_id, 2] = row['Metric Value']
+        reduced_trace_array[0, 0, 4] = 1.0
+        for i in range(trace_df['ID'].nunique()):
+            if reduced_trace_array[0, i, 2] != 0:
+                reduced_trace_array[0, i, 3] = reduced_trace_array[0, i, 1]/reduced_trace_array[0, i, 2]
+            if i > 0:
+                if reduced_trace_array[0, i-1, 2] != 0:
+                    reduced_trace_array[0, i, 4] = reduced_trace_array[0, i, 1]/reduced_trace_array[0, i-1, 2]
                 else:
-                    old_row_id += 1
-                    count = 0
-                full_trace_array[0, old_row_id, count] = row['Metric Value']
-                if row['Metric Name'] == 'Cycles':
-                    reduced_trace_array[0, old_row_id, 0] = row['Metric Value']
-                elif row['Metric Name'] == 'Mem Read':
-                    reduced_trace_array[0, old_row_id, 1] = row['Metric Value']
-                elif row['Metric Name'] == 'Mem Write':
-                    reduced_trace_array[0, old_row_id, 2] = row['Metric Value']
-            reduced_trace_array[0, 0, 4] = 1.0
-            for i in range(trace_df['ID'].nunique()):
-                if reduced_trace_array[0, i, 2] != 0:
-                    reduced_trace_array[0, i, 3] = reduced_trace_array[0, i, 1]/reduced_trace_array[0, i, 2]
-                if i > 0:
-                    if reduced_trace_array[0, i-1, 2] != 0:
-                        reduced_trace_array[0, i, 4] = reduced_trace_array[0, i, 1]/reduced_trace_array[0, i-1, 2]
-                    else:
-                        reduced_trace_array[0, i, 4] = 1.0
+                    reduced_trace_array[0, i, 4] = 1.0
 
-            full_trace_array = np.nan_to_num(full_trace_array)
-            full_trace_list = list(full_trace_array[0, self.selected_entry, :])
+        full_trace_array = np.nan_to_num(full_trace_array)
+        full_trace_list = list(full_trace_array[0, self.selected_entry, :])
 
-            reduced_trace_array = np.nan_to_num(reduced_trace_array)
-            reduced_trace_list = list(reduced_trace_array[0, self.selected_entry, :])
-            timeonly_trace_list = [reduced_trace_list[0]]
+        reduced_trace_array = np.nan_to_num(reduced_trace_array)
+        reduced_trace_list = list(reduced_trace_array[0, self.selected_entry, :])
+        timeonly_trace_list = [reduced_trace_list[0]]
 
-            #Append input image height/width
+        #Append input image height/width
+        if self.operator_name == "conv" or self.operator_name == "depth":
             if self.input_features == 3072:
                 full_trace_list.append(32)
                 reduced_trace_list.append(32)
@@ -314,21 +346,25 @@ class dim_obf_env(object):
                 full_trace_list.append(28)
                 reduced_trace_list.append(28)
                 timeonly_trace_list.append(28)
-            overall_list = [timeonly_trace_list, reduced_trace_list, full_trace_list]
+        elif self.operator_name == "fc":
+            full_trace_list.append(self.input_features)
+            reduced_trace_list.append(self.input_features)
+            timeonly_trace_list.append(self.input_features)
+        overall_list = [timeonly_trace_list, reduced_trace_list, full_trace_list]
 
-            self.cycles = overall_list[0][0]
-            self.cycles = csv_to_time_overhead(sample_file)
-            sys.path.append('../dim_predictor')
-            from dim_predict import Dim_predictor
+        self.cycles = overall_list[0][0]
+        self.cycles = csv_to_time_overhead(sample_file)
+        sys.path.append('../dim_predictor')
+        from dim_predict import Dim_predictor
 
-            all_predictor = Dim_predictor(path_to_model = "../dim_predictor/saved_models", n_estimators = 100, min_samples_split = 30, dataset_type = "all")
-            final_str = ""
-            final_str += "Average Prediction on three cases: \n"
-            final_str += (all_predictor.predict(overall_list) + "\n")
-
-        except:
-            print("Exeception! Output GroundTruth as prediction.")
-            final_str = "Average Prediction on three cases: \nPrediction is:\n Conv2D(64, 128, kernel_size = 3, stride = 1, padding = 1)\n"
+        dim_predictor = Dim_predictor(path_to_model = "../dim_predictor/saved_models", n_estimators = 100, min_samples_split = 30, dataset_type = "all", operator_name = self.operator_name)
+        final_str = ""
+        final_str += "Average Prediction on three cases: \n"
+        final_str += (dim_predictor.predict(overall_list) + "\n")
+        print(final_str)
+        # except:
+        #     print("Exeception! Output GroundTruth as prediction.")
+        #     final_str = "Average Prediction on three cases: \nPrediction is:\n Conv2D(64, 128, kernel_size = 3, stride = 1, padding = 1)\n"
         return final_str
     def random_act_dict_gen(self, range_list):
         '''Randomly Generate Obfuscating operators'''
@@ -343,12 +379,12 @@ class dim_obf_env(object):
         self.widen_list[2] = 0
         '''dummy_list follow randint[0, 5)  * bernouli (controlled by range_list[0])'''
         self.dummy_list = list((np.random.randint(5, size=(1, len(self.dummy_list))) * np.random.binomial(size=(1, len(self.dummy_list)), n=1, p = range_list[1])).flatten())
-        self.dummy_list[1] = 0
-        self.dummy_list[2] = 0
+        for i in range(len(self.dummy_list)):
+            self.dummy_list[i] = 0
         '''lists below follow bernouli (controlled by range_list[2], [3], [4])'''
         self.kerneladd_list = list(np.random.binomial(size=(1, len(self.kerneladd_list)), n=1, p = range_list[2]).flatten())
-        self.kerneladd_list[1] = 0
-        self.kerneladd_list[2] = 0
+        for i in range(len(self.kerneladd_list)):
+            self.kerneladd_list[i] = 0
         '''prune_list prune_bin_entry follows bernouli (controlled by range_list[5]), prune_4_entry follows randint[0, 4)'''
         prune_bin_entry = [1, 2, 5, 6, 7, 8, 13]
         prune_4_entry = [0, 3, 4, 9, 10, 11, 12]
@@ -360,20 +396,20 @@ class dim_obf_env(object):
                     "kerneladd_list": self.kerneladd_list, "prune_list": self.prune_list}
 
     def avg_param_from_dependency(self, l1_id = 1, l2_id =3):
-        # saved_selected_entry = self.selected_entry
         total_cycles = 0
         self.selected_entry = l2_id
         current_prediction = self.apply_dict()
-        current_param = extract_param_from_str(current_prediction)
+        current_param = extract_param_from_str(current_prediction, self.operator_name)
         total_cycles += self.cycles
         self.selected_entry = l1_id
         avg_param = current_param
         current_prediction = self.apply_dict()
-        previous_param = extract_param_from_str(current_prediction)
+        previous_param = extract_param_from_str(current_prediction, self.operator_name)
         total_cycles += self.cycles
-        avg_param[0] = (current_param[0] + previous_param[1])/2
-        # self.selected_entry = saved_selected_entry
+        if self.operator_name != "fc":
+            avg_param[0] = (current_param[0] + previous_param[1])/2
         return avg_param, total_cycles
+    
     def get_3_avg_param(self, l1_id = 1, l2_id =3, average_time = 1):
         current_param, current_cycle = self.avg_param_from_dependency(l1_id, l2_id)
         for i in range(average_time - 1):
@@ -389,7 +425,7 @@ def main():
     parser.add_argument('--model_id', type=int, default=2, help='model_id, 1 ~ 2')
     parser.add_argument('--batch_size', type=int, default=1, help='input batch size.')
     parser.add_argument('--input_features', type=int, default=3072, help='flattened input dimension.')
-    parser.add_argument('--out_name', type=str, default="dim", help='lib_name=lib_${model_name}_${out_name}')
+    parser.add_argument('--out_name', type=str, default="dim", help='lib_name for save')
     parser.add_argument('--widen_list', type=str, default="None", help='')
     parser.add_argument('--decompo_list', type=str, default="None", help='')
     parser.add_argument('--dummy_list', type=str, default="None", help='')
