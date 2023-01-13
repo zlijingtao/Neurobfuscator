@@ -348,3 +348,5 @@ For the experiments presented in the [published version](https://ieeexplore.ieee
 **Why don't we perform it properly?** - We only did the sequence extraction and dimension extraction seperately, but did not extract the fully executable model (as you may notice, this requires lots of effort...)
     
 **Luckily** This paper [NeuroUnlock](https://arxiv.org/abs/2206.00402) did it properly. In Fig. 19, they showed the extracted model (from a real attacker's view) of an obfuscated model using neurobfuscator cannot converge properly and get an 10% accuracy on CIFAR-10. Please refer to their repository for reference, Thanks!
+
+**Our Fix** In our upcoming upgraded version of Neurobfuscator, we will address this issue (Timeline: by summer 2023).
